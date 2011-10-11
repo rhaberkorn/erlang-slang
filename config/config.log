@@ -1,8 +1,0 @@
-This file contains any messages produced by compilers while
-running configure, to aid debugging if configure makes a mistake.
-
-configure:576: checking host system type
-configure:597: checking target system type
-configure:615: checking build system type
-configure:701: checking for erl
-configure:752: checking for erlc
