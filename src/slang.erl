@@ -386,7 +386,7 @@ open_slang_driver() ->
 	     {error, _} ->
 		 {ok, Dir, _} =  regexp:sub(code:which(slang),
 					    "ebin/slang.beam",[]),
-		 Dir ++ "/priv";
+		 Dir ++ "priv";
 	     Dir ->
 		 Dir
 	 end,
@@ -396,7 +396,7 @@ open_slang_driver() ->
 	{error,{already_started, _}} ->
 	    ok;
 	{error, What} ->
-	    error_logger:format("Failed to open driver ~p~n", [What]),
+	    error_logger:format("Failed to open driver: ~s~n", [erl_ddll:format_error(What)]),
 	    exit(nodriver)
     end,
     P = open_port({spawn, slang_drv}, []),
