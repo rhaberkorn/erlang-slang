@@ -12,5 +12,5 @@
 # config.status only pays attention to the cache file if you give it the
 # --recheck option to rerun configure.
 #
-ac_cv_path_ERL=${ac_cv_path_ERL=/usr/local/bin/erl}
-ac_cv_path_ERLC=${ac_cv_path_ERLC=/usr/local/bin/erlc}
+ac_cv_path_ERL=${ac_cv_path_ERL=/usr/bin/erl}
+ac_cv_path_ERLC=${ac_cv_path_ERLC=/usr/bin/erlc}

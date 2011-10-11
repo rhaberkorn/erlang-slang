@@ -1,9 +1,9 @@
 
-This is slang, an erlang interface to the amazing highly portable tty 
+This is slang, an erlang interface to the amazing highly portable tty
 interface that gave us such nice tty applications as mutt and slrn
 
 It's distributed as an erlang application (without a start mod) which makes
-it possible to integrate into a larger buld environment.
+it possible to integrate into a larger build environment.
 We use this at bluetail to have a terminal application onto our
 actual target machine. It can be used to to anything that's possible
 to di with the slang lib itself.
@@ -17,16 +17,7 @@ demo: contains some various demos
 doc:  well .. yes guess what
 config: contains configure scripts and stuff
 
-To compile: 
+To compile:
 
 $ (cd config; ./configure)
 $ make
-
-
-
-
-
-
-
-
- 

@@ -1,6 +1,6 @@
 
 CC=gcc
-ERLDIR=/usr/local/lib/erlang
+ERLDIR=/usr/lib/erlang
 SLANG_INCLUDE=/usr/include/slang
 LD_SHARED=ld -shared
 

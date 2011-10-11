@@ -15,7 +15,7 @@ start() ->
     slang:kp_init(),
     slang:init_tty(7, 0, 1),
     slang:smg_init_smg (),
-    
+
     draw_stuff2(),
 
     Key = slang:kp_getkey(),

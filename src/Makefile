@@ -11,12 +11,12 @@ include ../include.mk
 include ../vsn.mk
 
 ERLC_FLAGS+=-W $(DEBUG_FLAGS)
-MODULES = slang 
+MODULES = slang
 
 TARGETS = $(MODULES:%=../ebin/%.beam) ../ebin/slang.app
 
 
-all debug:	$(TARGETS) 
+all debug:	$(TARGETS)
 clean:
 	rm -f $(TARGETS)
 ../ebin/slang.app:	slang.app.src

@@ -1,8 +1,8 @@
 
 #include <stdio.h>
-#include "driver.h"
+#include "erl_driver.h"
 #include <slang.h>
-#include <signal.h> 
+#include <signal.h>
 
 
 #if (SLANG_VERSION < 10400 )
@@ -183,10 +183,10 @@
 
 
 
-        
+
 static long sl_start();
 static int sl_stop(), sl_read();
-static struct driver_entry sl_driver_entry;
+static struct erl_drv_entry sl_erl_drv_entry;
 
 
 static int wait_for = 0;
@@ -248,12 +248,12 @@ static long sl_start(long port, char *buf)
 }
 
 
-static int sl_stop(int port)
+static int sl_stop(ErlDrvPort port)
 {
     return 1;
 }
 
-static int ret_int_int(int port, int i, int j)
+static int ret_int_int(ErlDrvPort port, int i, int j)
 {
     char buf[9];
     buf[0] = 1;
@@ -264,7 +264,7 @@ static int ret_int_int(int port, int i, int j)
 }
 
 
-static int ret_int(int port, int ret)
+static int ret_int(ErlDrvPort port, int ret)
 {
     char buf[5];
     buf[0] = 1;
@@ -274,7 +274,7 @@ static int ret_int(int port, int ret)
 }
 
 
-static int ret_string(int port, char *str)
+static int ret_string(ErlDrvPort port, char *str)
 {
     str[-1] = 1;
     driver_output(port, str, 1+strlen(str));
@@ -282,7 +282,7 @@ static int ret_string(int port, char *str)
 }
 
 
-static int sl_output(int port, char *buf, int len)
+static int sl_output(ErlDrvPort port, char *buf, int len)
 {
     int x,y,z,v,w;
     char *str, *t1, *t2, *t3;
@@ -310,7 +310,7 @@ static int sl_output(int port, char *buf, int len)
 	ret = SLang_init_tty (abort_char,flow_ctl, opost);
 	return ret_int(port, ret);
     }
-    
+
     case SET_ABORT_FUNCTION: {
 	SLang_set_abort_signal (NULL);
 	return ret_int(port, 0);
@@ -337,7 +337,7 @@ static int sl_output(int port, char *buf, int len)
     }
     case UNGETKEY: {
 	unsigned char  key =  (unsigned char) *buf;
-	SLang_ungetkey (key); 
+	SLang_ungetkey (key);
 	return 0;
     }
     case RESET_TTY: {
@@ -421,7 +421,7 @@ static int sl_output(int port, char *buf, int len)
 	case esl_error:
 	    return ret_int(port, SLang_Error);
 	case esl_version:
-	    return ret_int(port, SLang_Version); 
+	    return ret_int(port, SLang_Version);
 	case  esl_backspace_moves :
 	    return ret_int(port, SLsmg_Backspace_Moves);
 	case esl_display_eight_bit:
@@ -430,13 +430,13 @@ static int sl_output(int port, char *buf, int len)
 	    return ret_int(port, -1);
 	}
     }
-	    
+
 
 
     /*{{{ SLsmg Screen Management Functions */
 
 
-    
+
     case SMG_FILL_REGION: {
 	x = get_int32(buf); buf+= 4;
 	y =  get_int32(buf); buf+= 4;
@@ -445,49 +445,49 @@ static int sl_output(int port, char *buf, int len)
 	ch = *buf;
 	SLsmg_fill_region(x, y,z,v,ch);
 	return 0;
-    }			  
+    }
     case SMG_SET_CHAR_SET: {
 	x = get_int32(buf); buf+= 4;
 	SLsmg_set_char_set(x);
 	return 0;
-    }			
+    }
     case SMG_SUSPEND_SMG: {
 	return ret_int(port, SLsmg_suspend_smg());
-    }				  
+    }
     case SMG_RESUME_SMG: {
 	ret_int(port, SLsmg_resume_smg());
-    }				     
+    }
     case SMG_ERASE_EOL: {
 	SLsmg_erase_eol();
 	return 0;
-    }					
+    }
     case SMG_GOTORC: {
 	x = get_int32(buf); buf+= 4;
 	y = get_int32(buf); buf+= 4;
 	SLsmg_gotorc(x,  y);
 	return 0;
-    }					 
+    }
     case SMG_ERASE_EOS: {
 	SLsmg_erase_eos();
 	return 0;
-    }						
+    }
     case SMG_REVERSE_VIDEO: {
 	SLsmg_reverse_video();
 	return 0;
-    }							
+    }
     case SMG_SET_COLOR: {
 	x = get_int32(buf); buf+= 4;
 	SLsmg_set_color(x);
 	return 0;
-    }							
+    }
     case SMG_NORMAL_VIDEO: {
 	SLsmg_normal_video();
 	return 0;
-    }							
+    }
     case SMG_WRITE_STRING: {
 	SLsmg_write_string(buf);
 	return 0;
-    }									   
+    }
     case SMG_WRITE_CHAR: {
 	ch = *buf;
 	SLsmg_write_char(ch);
@@ -503,21 +503,21 @@ static int sl_output(int port, char *buf, int len)
 	w = get_int32(buf); buf+= 4;
 	SLsmg_write_wrapped_string(t1, x,y,z,v,w);
 	return 0;
-    }												   
+    }
     case SMG_CLS: {
 	SLsmg_cls();
 	return 0;
-    }									
+    }
     case SMG_REFRESH: {
 	SLsmg_refresh();
 	return 0;
-    }										
+    }
     case SMG_TOUCH_LINES: {
 	x = get_int32(buf); buf+= 4;
 	y = get_int32(buf); buf+= 4;
 	SLsmg_touch_lines(x, y);
 	return 0;
-    }											
+    }
     case SMG_TOUCH_SCREEN: {
 #if (SLANG_VERSION < 10400 )
 	return ret_int(port, -1);
@@ -525,24 +525,24 @@ static int sl_output(int port, char *buf, int len)
 	SLsmg_touch_screen();
 #endif
 	return 0;
-    }													   
+    }
     case SMG_INIT_SMG: {
 	return ret_int(port,  SLsmg_init_smg());
-    }													   
+    }
     case SMG_REINIT_SMG: {
 #if (SLANG_VERSION < 10400 )
 	return ret_int(port, -1);
 #else
 	return ret_int(port, SLsmg_reinit_smg());
 #endif
-    }														 
+    }
     case SMG_RESET_SMG: {
 	SLsmg_reset_smg();
 	return 0;
-    }														    
+    }
     case SMG_CHAR_AT: {
 	return ret_int(port, SLsmg_char_at());
-    }														     
+    }
     case SMG_SET_SCREEN_START: {
 	int *ip1, *ip2;
 	*ip1 = get_int32(buf); buf+= 4;
@@ -555,19 +555,19 @@ static int sl_output(int port, char *buf, int len)
 	x = get_int32(buf); buf+= 4;
 	SLsmg_draw_hline(x);
 	return 0;
-    }																 
+    }
     case SMG_DRAW_VLINE: {
 	x = get_int32(buf); buf+= 4;
 	SLsmg_draw_vline(x);
 	return 0;
-    }																     
+    }
     case SMG_DRAW_OBJECT: {
 	x = get_int32(buf); buf+= 4;
 	y = get_int32(buf); buf+= 4;
 	x = get_int32(buf); buf+= 4;
 	SLsmg_draw_object(x, y,z);
 	return 0;
-    }																	  
+    }
     case SMG_DRAW_BOX: {
 	x = get_int32(buf); buf+= 4;
 	y = get_int32(buf); buf+= 4;
@@ -575,26 +575,26 @@ static int sl_output(int port, char *buf, int len)
 	v = get_int32(buf); buf+= 4;
 	SLsmg_draw_box(x, y,z,v);
 	return 0;
-    }																	   
+    }
     case SMG_GET_COLUMN: {
 	return ret_int(port, SLsmg_get_column());
-    }																		
+    }
     case SMG_GET_ROW: {
 	return ret_int(port, SLsmg_get_row());
-    }		
+    }
 
     case SMG_FORWARD: {
 	x = get_int32(buf); buf+= 4;
 	SLsmg_forward(x);
 	return 0;
-    }							
+    }
     case SMG_WRITE_COLOR_CHARS: {
 	SLsmg_Char_Type * sl;
 	sl = decode_smg_char_type(&buf);
 	x = get_int32(buf); buf+= 4;
 	SLsmg_write_color_chars(sl, x);
 	return 0;
-    }		
+    }
     case SMG_READ_RAW: {
 	x = get_int32(buf); buf+= 4;
 	t1 = malloc((2*x) + 2 + 1);
@@ -607,10 +607,10 @@ static int sl_output(int port, char *buf, int len)
     case SMG_WRITE_RAW: {
 	SLsmg_Char_Type * sl;
 	sl = decode_smg_char_type(&buf);
-	x = get_int32(buf); 
+	x = get_int32(buf);
 	y = SLsmg_write_raw(sl, x);
 	return ret_int(port, y);
-    }																				
+    }
     case SMG_SET_COLOR_IN_REGION: {
 	x = get_int32(buf); buf+= 4;
 	y = get_int32(buf); buf+= 4;
@@ -619,9 +619,7 @@ static int sl_output(int port, char *buf, int len)
 	w = get_int32(buf); buf+= 4;
 	SLsmg_set_color_in_region(x, y,z,v,w);
 	return 0;
-    }																				
-    
-    
+    }
 
 
 
@@ -718,7 +716,7 @@ static int sl_output(int port, char *buf, int len)
     }
     case TT_INIT_VIDEO: {
 	ret = SLtt_init_video ();
-	return ret_int(port, ret);	
+	return ret_int(port, ret);
     }
     case TT_RESET_VIDEO: {
 	SLtt_reset_video ();
@@ -734,25 +732,24 @@ static int sl_output(int port, char *buf, int len)
     }
     case TT_SET_CURSOR_VISIBILITY: {
 	ret = SLtt_set_cursor_visibility (get_int32(buf));
-	return ret_int(port, ret);	
+	return ret_int(port, ret);
     }
     case TT_SET_MOUSE_MODE: {
 	x = get_int32(buf); buf+=4;
 	y = get_int32(buf); buf+=4;
 	ret = SLtt_set_mouse_mode (x,y);
-	return ret_int(port, ret);	
+	return ret_int(port, ret);
     }
 
     case TT_INITIALIZE: {
 	ret =SLtt_initialize (buf);
-	return ret_int(port, ret);	
+	return ret_int(port, ret);
     }
     case TT_ENABLE_CURSOR_KEYS: {
 	SLtt_enable_cursor_keys();
 	return 0;
     }
     case TT_SET_TERM_VTXXX: {
-	
 	return 0;
     }
     case TT_SET_COLOR_ESC: {
@@ -800,11 +797,9 @@ static int sl_output(int port, char *buf, int len)
 	return ret_string(port, str);
     }
     case TT_TIGETSTR: {
-	
 	return 0;
     }
     case TT_TIGETNUM: {
-
 	return 0;
     }
 
@@ -879,7 +874,7 @@ static int sl_output(int port, char *buf, int len)
 
 
 /* pending getkey request */
-sl_ready_input(int port, int fd)
+sl_ready_input(ErlDrvPort port, int fd)
 {
     unsigned int key;
     driver_select(port, 0, DO_READ, 0);
@@ -893,7 +888,7 @@ sl_ready_input(int port, int fd)
 	return ret_int(port, key);
     }
     return 0;
-    }	
+    }
 }
 
 
@@ -902,20 +897,17 @@ sl_ready_input(int port, int fd)
  * Initialize and return a driver entry struct
  */
 
-struct driver_entry *driver_init(void *handle)
+struct erl_drv_entry *driver_init(void *handle)
 {
-    sl_driver_entry.init = null_func;   /* Not used */
-    sl_driver_entry.start = sl_start;
-    sl_driver_entry.stop = sl_stop;
-    sl_driver_entry.output = sl_output;
-    sl_driver_entry.ready_input = sl_ready_input;
-    sl_driver_entry.ready_output = null_func;
-    sl_driver_entry.driver_name = "slang_drv";
-    sl_driver_entry.finish = null_func;
-    sl_driver_entry.handle = handle;  /* MUST set this!!! */
-    return &sl_driver_entry;
+    sl_erl_drv_entry.init = NULL;   /* Not used */
+    sl_erl_drv_entry.start = sl_start;
+    sl_erl_drv_entry.stop = sl_stop;
+    sl_erl_drv_entry.output = sl_output;
+    sl_erl_drv_entry.ready_input = sl_ready_input;
+    sl_erl_drv_entry.ready_output = NULL;
+    sl_erl_drv_entry.driver_name = "slang_drv";
+    sl_erl_drv_entry.finish = NULL;
+    sl_erl_drv_entry.handle = handle;  /* MUST set this!!! */
+    return &sl_erl_drv_entry;
 }
 
-
-
- 

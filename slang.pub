@@ -5,7 +5,3 @@
 {keywords, ["quack"]}.
 {needs, []}.
 {abstract,"This is a library which makes it possible to write terminal based aplications al'a vi/emacs/mutt/slrn in erlang."}.
-
-
- 
- 

@@ -1,0 +1,16 @@
+Source: erlang-slang
+Section: non-us/interpreters
+Priority: optional
+Maintainer: Mark Ng <ng@debian.org>
+Standards-Version: 3.5.6
+Build-Depends: debhelper (>> 3.0.0), slang1-dev (>= 1.4.4), erlang (>= 50), c-compiler, findutils, grep
+
+Package: erlang-slang
+Architecture: any
+Depends: ${shlibs:Depends}, erlang (>= 50)
+Description: S-Lang interface for Erlang
+ This is an erlang interface to S-Lang the amazing highly portable tty
+ interface that gave us such nice tty applications as mutt and slrn
+ .
+ It's distributed as an erlang application (without a start mod) which makes
+ it possible to integrate into a larger build environment.

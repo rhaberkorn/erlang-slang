@@ -14,7 +14,7 @@ SLsmg_fill_region
 
 
  DESCRIPTION
-   The `SLsmg_fill_region' function may be used to a 
+   The `SLsmg_fill_region' function may be used to a
    rectangular region with the character `ch' in the current color.
    The rectangle's upper left corner is at row `r' and column
    `c', and spans `nr' rows and `nc' columns.  The position
@@ -78,10 +78,10 @@ SLsmg_suspend_smg
    `SLsmg_suspend_smg' can be used to suspend the state of the
    screen management facility during suspension of the program.  Use of
    this function will reset the display back to its default state.  The
-   funtion `SLsmg_resume_smg' should be called after suspension.  
-   
+   funtion `SLsmg_resume_smg' should be called after suspension.
+
    It returns zero upon success, or -1 upon error.
-   
+
    This function is similar to `SLsmg_reset_smg' except that the
    state of the display prior to calling `SLsmg_suspend_smg' is saved.
 
@@ -169,7 +169,7 @@ SLsmg_reverse_video
    void SLsmg_reverse_video (void);
 
  DESCRIPTION
-   This function is nothing more than `SLsmg_set_color(1)'.  
+   This function is nothing more than `SLsmg_set_color(1)'.
 
  SEE ALSO
    SLsmg_set_color
@@ -273,7 +273,7 @@ SLsmg_vprintf
 SLsmg_write_string
 
  SYNOPSIS
-   Write a character string on the display 
+   Write a character string on the display
 
  USAGE
    void SLsmg_write_string (char *s)
@@ -334,7 +334,7 @@ SLsmg_write_nchars
    `SLsmg_write_nchars' writes at most `n' characters from the
    string `s' to the display.  If the length of `s' is less
    than `n', the whole length of the string will get written.
-   
+
    This function differs from `SLsmg_write_nstring' in that
    `SLsmg_write_nstring' will pad the string to write exactly
    `n' characters.  `SLsmg_write_nchars' does not perform any
@@ -454,11 +454,11 @@ SLsmg_init_smg
    terminal's physical display in the proper state.  It is up to the
    caller to make sure that the `SLtt' routines are initialized via
    `SLtt_get_terminfo' before calling `SLsmg_init_smg'.
-   
+
    This function should also be called any time the size of the
    physical display has changed so that it can reallocate a new virtual
    display to match the physical display.
-   
+
    It returns zero upon success, or -1 upon failure.
 
  SEE ALSO
@@ -513,7 +513,7 @@ SLsmg_set_screen_start
    is `NULL', then the corresponding value will be set to `0'.
    Otherwise, the location specified by the pointers will be updated to
    reflect the old origin.
-   
+
    See \tt{slang/demo/pager.c} for how this function may be used to
    scroll horizontally.
 
@@ -569,9 +569,9 @@ SLsmg_draw_object
    object is really a character from the alternate character set and
    may be specified using one of the following constants:
 
-       SLSMG_HLINE_CHAR         Horizontal line 
-       SLSMG_VLINE_CHAR         Vertical line 
-       SLSMG_ULCORN_CHAR        Upper left corner 
+       SLSMG_HLINE_CHAR         Horizontal line
+       SLSMG_VLINE_CHAR         Vertical line
+       SLSMG_ULCORN_CHAR        Upper left corner
        SLSMG_URCORN_CHAR        Upper right corner
        SLSMG_LLCORN_CHAR        Lower left corner
        SLSMG_LRCORN_CHAR        Lower right corner
@@ -814,7 +814,7 @@ SLclass_allocate_class
    that defines a new data type or class called `name'.  If
    successful, a pointer to the class is returned, or upon failure the
    function returns `NULL'.
-   
+
    This function does not automatically create the new data type.
    Callback functions must first be associated with the data type via
    functions such as `SLclass_set_push_function', and the the data
@@ -844,22 +844,22 @@ SLclass_register_class
    The `SLclass_register_class' function is used to register a new
    class or data type with the interpreter.  If successful, the
    function returns `0', or upon failure, it returns `-1'.
-   
+
    The first parameter, `cl', must have been previously obtained
    via the `SLclass_allocate_class' function.
-   
+
    The second parameter, `type' specifies the data type of the new
    class.  It must be an unsigned character with value greater that
    `127'.  The values in the range `0-127' are reserved for
    internal use by the library.
-   
+
    The size that the data type represents in bytes is specified by the
    third parameter, `sizeof_type'.   This value should not be
    confused with the sizeof the structure that represents the data
    type, unless the data type is of class `SLANG_CLASS_TYPE_VECTOR'
    or `SLANG_CLASS_TYPE_SCALAR'.  For pointer objects, the value
    of this parameter is just `sizeof(void *)'.
-   
+
    The final parameter specifies the class type of the data type.  It must
    be one of the values:
 
@@ -871,17 +871,17 @@ SLclass_register_class
    The `SLANG_CLASS_TYPE_SCALAR' indicates that the new data type
    is a scalar.  Examples of scalars in `SLANG_INT_TYPE' and
    `SLANG_DOUBLE_TYPE'.
-   
+
    Setting `class_type' to SLANG_CLASS_TYPE_VECTOR implies that the
    new data type is a vector, or a 1-d array of scalar types.  An
    example of a data type of this class is the
    `SLANG_COMPLEX_TYPE', which represents complex numbers.
-   
+
    `SLANG_CLASS_TYPE_PTR' specifies the data type is of a pointer
    type.  Examples of data types of this class include
    `SLANG_STRING_TYPE' and `SLANG_ARRAY_TYPE'.  Such types must
    provide for their own memory management.
-   
+
    Data types of class `SLANG_CLASS_TYPE_MMT' are pointer types
    except that the memory management, i.e., creation and destruction of
    the type, is handled by the interpreter.  Such a type is called a
@@ -917,7 +917,7 @@ SLclass_set_string_function
    type, and the address of the object for which a string represetation
    is required.  The callback function must return a _malloced_
    string.
-   
+
    Upon success, `SLclass_set_string_function' returns zero, or
    upon error it returns -1.
 
@@ -928,12 +928,12 @@ SLclass_set_string_function
         char *string_and_int_callback (unsigned char type, VOID_STAR addr)
         {
            char buf[64];
-   
+
    	switch (type)
    	  {
    	     case SLANG_STRING_TYPE:
    	       return SLmake_string (*(char **)addr);
-   	     
+
    	     case SLANG_INTEGER_TYPE:
    	       sprintf (buf, "%d", *(int *)addr);
    	       return SLmake_string (buf);
@@ -968,7 +968,7 @@ SLclass_set_destroy_function
    When called, `destroy_fun' will be passed two arguments: a
    unsigned char which represents the data type, and the address of the
    object to be destroyed.
-   
+
    `SLclass_set_destroy_function' returns zero upon success, and
    -1 upon failure.
 
@@ -1006,12 +1006,12 @@ SLclass_set_push_function
    `SLclass_set_push_function' is used to set the push callback
    for a new data type specified by `cl', which must have been
    previously obtained via `SLclass_allocate_class'.
-   
+
    The parameter `push_fun' is a pointer to the push callback.  It
    is required to take two arguments: an unsigned character
    representing the data type, and the address of the object to be
    pushed.  It must return zero upon success, or -1 upon failure.
-   
+
    `SLclass_set_push_function' returns zero upon success, or -1
    upon failure.
 
@@ -1045,14 +1045,14 @@ SLclass_set_pop_function
    `SLclass_set_pop_function' is used to set the callback for
    popping an object from the stack for a new data type specified by
    `cl', which must have been previously obtained via
-   `SLclass_allocate_class'. 
-   
+   `SLclass_allocate_class'.
+
    The parameter `pop_fun' is a pointer to the pop callback
    function, which is required to take two arguments: an unsigned
    character representing the data type, and the address of the object
    to be popped.  It must return zero upon success, or -1 upon
    failure.
-   
+
    `SLclass_set_pop_function' returns zero upon success, or -1
    upon failure.
 
@@ -1083,7 +1083,7 @@ SLclass_get_datatype_name
    data type specified by `type'.  For example, if `type' is
    `SLANG_INT_TYPE', the string `"Integer_Type"' will be
    returned.
-   
+
    This function returns a pointer that should not be modified or freed.
 
  SEE ALSO
@@ -1223,8 +1223,8 @@ SLang_exit_error
    displays an error message using a `printf' type variable
    argument list.  The default behavior to this function is to write
    the message to `stderr' and exit with the `exit' system
-   call. 
-   
+   call.
+
    If the the function pointer `SLang_Exit_Error_Hook' is
    non-NULL, the function to which it points will be called.  This
    permits an application to perform whatever cleanup is necessary.
@@ -1250,7 +1250,7 @@ SLang_init_slang
    applications that use the S-Lang interpreter.  It initializes the
    interpreter, defines the built-in data types, and adds a set of core
    intrinsic functions.
-   
+
    The function returns `0' upon success, or `-1' upon failure.
 
  SEE ALSO
@@ -1341,7 +1341,7 @@ SLadd_intrin_fun_table
    parameter, `tbl' specifies the table to be added.  The second
    parameter `pp_name', if non-NULL will be added to the list of
    preprocessor symbols.
-   
+
    This function returns -1 upon failure or zero upon success.
 
  NOTES
@@ -1367,7 +1367,7 @@ SLadd_intrin_var_table
    parameter, `tbl' specifies the table to be added.  The second
    parameter `pp_name', if non-NULL will be added to the list of
    preprocessor symbols.
-   
+
    This function returns -1 upon failure or zero upon success.
 
  NOTES
@@ -1392,7 +1392,7 @@ SLang_load_file
    specified by `fn' and feeds it to the interpreter, line by line,
    for execution.  If `fn' is `NULL', the function will take
    input from `stdin'.
-   
+
    If no error occurs, it returns `0'; otherwise,
    it returns `-1', and sets `SLang_Error' accordingly.  For
    example, if it fails to open the file, it will return `-1' with
@@ -1427,7 +1427,7 @@ SLang_restart
    intact.  Any time the stack is believed to be trashed, this routine
    should be called with a non-zero argument (e.g., if
    `setjmp'/`longjmp' is called).
-   
+
    Calling `SLang_restart' does not reset the global variable
    `SLang_Error' to zero.  It is up to the application to reset
    that variable to zero after calling `SLang_restart'.
@@ -1436,7 +1436,7 @@ SLang_restart
 
          while (1)
            {
-   	   if (SLang_Error) 
+   	   if (SLang_Error)
    	     {
    	        SLang_restart (1);
    		SLang_Error = 0;
@@ -1466,7 +1466,7 @@ SLang_byte_compile_file
    will have the name exmp{init.slc}.  The meaning of the second
    parameter, `reserved', is reserved for future use.  For now, set
    it to `0'.
-   
+
    The function returns zero upon success, or `-1' upon error and
    sets SLang_Error accordingly.
 
@@ -1487,7 +1487,7 @@ SLang_autoload
    `slang' function name `funct' with the file `filename'
    such that if `funct' has not already been defined when needed,
    it will be loaded from `filename'.
-   
+
    `SLang_autoload' has no effect if `funct' has already been
    defined.  Otherwise it declares `funct' as a user-defined S-Lang
    function.  It returns `0' upon success, or `-1' upon error.
@@ -1618,7 +1618,7 @@ SLang_pop_string
    The `SLpop_string' function pops a string from the stack and
    returns it as a malloced pointer via `strptr'.  After the
    function returns, the integer pointed to by the second parameter
-   will be set to a non-zero value if `*strptr' should be freed via 
+   will be set to a non-zero value if `*strptr' should be freed via
    `free' or `SLfree'.  If successful, `SLpop_string'
    returns zero.  However, if the top stack item is not of type
    `SLANG_STRING_TYPE', or the stack is empty, the function will
@@ -1665,7 +1665,7 @@ SLang_pop_slstring
    `SLang_free_slstring' is the preferred function for popping
    strings.  This is a result of the fact that the interpreter uses
    hashed strings as the native representation for string data.
-   
+
    One must _never_ free a hashed string using `free' or
    `SLfree'.  In addition, one must never make any attempt to
    modify a hashed string and doing so will result in memory
@@ -2021,10 +2021,10 @@ SLexecute_function
          {
             double sum, x, y;
    	 SLang_Name_Type *nt;
-   
+
    	 if (NULL == (nt = SLang_get_function (fname)))
    	   return -1;
-   	 
+
    	 sum = 0;
    	 for (x = 0; x < 10.0; x += 0.1)
    	   {
@@ -2036,7 +2036,7 @@ SLexecute_function
    	        return -1;
    	      if (-1 == SLang_pop_double (&y, NULL, NULL))
    	        return -1;
-   	      
+
    	      sum += y;
    	   }
    	 return sum;
@@ -2260,7 +2260,7 @@ SLcalloc
  DESCRIPTION
    This function uses `calloc' to allocate memory for
    `num_elem' objects with each of size `elem_size' and returns
-   the result.  In addition, the newly allocated memory is zeroed. 
+   the result.  In addition, the newly allocated memory is zeroed.
    Upon error it returns `NULL'; otherwise it returns a pointer to
    the allocated memory.  One should use `SLfree' to free the
    memory after used.
@@ -2304,8 +2304,8 @@ SLrealloc
    memory block specified by `ptr' to the new size `new_size'.
    If `ptr' is `NULL', the function call is equivalent to
    `SLmalloc(new_size)'.  Similarly, if `new_size' is zero,
-   the function call is equivalent to `SLfree(ptr)'.  
-   
+   the function call is equivalent to `SLfree(ptr)'.
+
    If the function fails, or if `new_size' is zero, `NULL' is
    returned.  Otherwise a pointer is returned to the (possibly moved)
    new block of memory.
@@ -2330,8 +2330,8 @@ SLcurrent_time_string
         "Wed Dec 10 12:50:28 1997"
 
    However, unlike the `ctime' function, a newline character is not
-   present in the string.  
-   
+   present in the string.
+
    The returned value points to a statically allocated memory block
    which may get overwritten on subsequent function calls.
 
@@ -2369,7 +2369,7 @@ SLang_pop_fileptr
  DESCRIPTION
    `SLang_pop_fileptr' pops a file pointer from the S-Lang
    run-time stack.  It returns zero upon success, or -1 upon failure.
-   
+
    A S-Lang file pointer (SLANG_FILEPTR_TYPE) is actually a memory
    managed object.  For this reason, `SLang_pop_fileptr' also
    returns the memory managed object via the argument list.  It is up
@@ -2387,12 +2387,12 @@ SLang_pop_fileptr
    	SLang_MMT_Type *mmt;
    	FILE *fp;
    	int status;
-   
+
    	if (-1 == SLang_pop_double (&d, NULL, NULL))
    	  return -1;
    	if (-1 == SLang_pop_fileptr (&mmt, &fp))
    	  return -1;
-   	
+
    	status = fwrite (&d, sizeof (double), 1, fp);
    	SLang_free_mmt (mmt);
            return status;
@@ -2403,7 +2403,7 @@ SLang_pop_fileptr
         define write_some_values ()
         {
            variable fp, d;
-   
+
    	fp = fopen ("myfile.dat", "wb");
    	if (fp == NULL)
    	  error ("file failed to open");
@@ -2451,7 +2451,7 @@ SLadd_intrinsic_function
    to the function.  The variable argument list following `nargs'
    must consists of `nargs' integers which specify the data type of
    each argument.
-   
+
    The function returns zero upon success or -1 upon failure.
 
  EXAMPLE
@@ -2464,7 +2464,7 @@ SLadd_intrinsic_function
    	  {
    	    msg_error ("Access denied.");
    	    return -1;
-   	  }	  
+   	  }
    	return SLsystem (cmd);
         }
 
@@ -2504,7 +2504,7 @@ SLadd_intrinsic_variable
    data type of the variable.  If the fourth parameter, `rdonly',
    is non-zero, the variable will interpreted by the interpreter as
    read-only.
-   
+
    If successful, `SLadd_intrinsic_variable' returns zero,
    otherwise it returns -1.
 
@@ -2629,17 +2629,17 @@ SLang_init_tty
    input.  If the first parameter `intr_ch' is in the range 0-255,
    it will be used as the interrupt character, e.g., under Unix this
    character will generate a `SIGINT' signal.  Otherwise, if it is
-   `-1', the interrupt character will be left unchanged.  
-   
+   `-1', the interrupt character will be left unchanged.
+
    If the second parameter `no_flow_ctrl' is non-zero, flow control
    (`XON'/`XOFF') processing will be
-   enabled.  
-   
+   enabled.
+
    If the last parmeter `opost' is non-zero, output processing by the
    terminal will be enabled.  If one intends to use this function in
    conjunction with the S-Lang screen management routines
    (`SLsmg'), this paramete shold be set to zero.
-   
+
    `SLang_init_tty' returns zero upon success, or -1 upon error.
 
  NOTES
@@ -2650,7 +2650,7 @@ SLang_init_tty
    and the generation of other signals via the keyboard is disabled.
    However, generation of the job control signal `SIGTSTP' is possible
    via the `SLtty_set_suspend_state' function.
-   
+
    Under Unix, the integer variable `SLang_TT_Read_FD' is used to
    specify the input descriptor for the terminal.  If
    `SLang_TT_Read_FD' represents a terminal device as determined
@@ -2661,11 +2661,11 @@ SLang_init_tty
    used.  So, if you prefer to use `stdin' for input, then set
    `SLang_TT_Read_FD' to `fileno(stdin)' _before_ calling
    `SLang_init_tty'.
-   
+
    If the variable `SLang_TT_Baud_Rate' is zero when this function
    is called, the function will attempt to determine the baud rate by
    querying the terminal driver and set `SLang_TT_Baud_Rate' to
-   that value.  
+   that value.
 
  SEE ALSO
    SLang_reset_tty, SLang_getkey, SLtty_set_suspend_state
@@ -2700,7 +2700,7 @@ SLtty_set_suspend_state
    disable keyboard generation of the `SIGTSTP' job control signal.
    If `s' is non-zero, generation of this signal via the terminal
    interface will be enabled, otherwise it will be disabled.
-   
+
    This function should only be called after the terminal driver has be
    initialized via `SLang_init_tty'.  The `SLang_init_tty'
    always disables the generation of `SIGTSTP' via the keyboard.
@@ -2997,7 +2997,7 @@ SLang_do_key
    specified by the `getkey' function pointer and uses the
    key sequence to return the appropriate entry in the keymap specified
    by `kml'.
-   
+
    `SLang_do_key' returns `NULL' if the key sequence is not
    defined by the keymap, otherwise it returns a pointer to an object
    of type `SLang_Key_Type', which is defined in `slang.h' as
@@ -3020,7 +3020,7 @@ SLang_do_key
           unsigned char str[SLANG_MAX_KEYMAP_KEY_SEQ + 1];/* key sequence */
         }
    SLang_Key_Type;
-   
+
 
    The `type' field specifies which field of the union `f'
    should be used.  If `type' is `SLKEY_F_INTERPRET', then
@@ -3091,8 +3091,8 @@ SLang_process_keystring
    1).  In addition, if the key sequence contains constructs such as
    `^(XX)', where `XX' represents a two-character termcap
    specifier, the termcap escape sequence will be looked up and
-   substituted.   
-   
+   substituted.
+
    Upon success, `SLang_process_keystring' returns a raw
    key-sequence whose first character represents the total length of
    the key-sequence, including the length specifier itself.  It returns
@@ -3179,12 +3179,12 @@ SLextract_list_element
           unsigned int nth;
           char **a;
           char buf[1024];
-   
+
           /* Determine the size of the array */
           nth = 0;
           while (0 == SLextract_list_element (list, nth, delim, buf, sizeof(buf)))
             nth++;
-          
+
           ap = (char **) SLmalloc ((nth + 1) * sizeof (char **));
           nth = 0;
           while (0 == SLextract_list_element (list, nth, delim, buf, sizeof(buf)))

@@ -17,13 +17,13 @@ stop_user() ->
     Flag=process_flag(trap_exit, true),
     {links, Lks0} = process_info(whereis(user),links),
     Lks = lists:delete(whereis(error_logger), Lks0),
-    
+
     Hs = gen_event:which_handlers(error_logger),
-    
+
     case lists:member(error_logger_tty_h, Hs) of
         true ->
 	    error_logger:delete_report_handler(error_logger_tty_h),
-	    
+
 
             supervisor:terminate_child(kernel_sup, user),
 	    lists:foreach(fun(Pid) ->
@@ -56,8 +56,8 @@ wait_user(_) ->
 
 init_tty(AbortChar, FlowControl, Opost) ->
     P = gp(),
-    p_cmd(P, ?INIT_TTY, [{int, AbortChar}, 
-			 {int, FlowControl}, 
+    p_cmd(P, ?INIT_TTY, [{int, AbortChar},
+			 {int, FlowControl},
 			 {int, Opost}], int32).
 
 set_abort_signal(null) ->
@@ -122,7 +122,7 @@ signal(Sig, Fun) ->
 smg_fill_region (R, C, Nr, Nc, Ch) ->
     P = gp(),
     p_cmd(P,?SMG_FILL_REGION, [{int,R}, {int, C},
-			       {int, Nr}, {int, Nc}, 
+			       {int, Nr}, {int, Nc},
 			       {char, Ch}], void).
 
 smg_set_char_set (A) ->
@@ -194,7 +194,7 @@ smg_write_nchars (S, N) ->
 smg_write_wrapped_string (S, R, C, Nr, Nc, Fill) ->
     P = gp(),
     p_cmd(P, ?SMG_WRITE_WRAPPED_STRING, [{string, S},{int, R}, {int, C},
-					{int, Nr}, {int, Nc}, {int, Fill}], 
+					{int, Nr}, {int, Nc}, {int, Fill}],
 	  void).
 
 smg_cls () ->
@@ -324,7 +324,7 @@ p_cmd(P, Op, ArgList, Expect) ->
     end.
 
 rec_loop(P, Expect, Sig) ->
-    receive 
+    receive
 	{P, {data, [1 |What]}} ->
 	    {expect(What, Expect), Sig};
 	{P, {data, [0 , X1, X2, X3, X4]}} ->
@@ -338,7 +338,7 @@ rec_loop(P, Expect, Sig) ->
 	{'EXIT', P, Reason} ->
 	    exit(Reason)
     after 200 ->
-	    P ! {self(), {command, [255]}}, % tick 
+	    P ! {self(), {command, [255]}}, % tick
 	    rec_loop(P, Expect, Sig)
     end.
 
@@ -378,7 +378,7 @@ mk_args([{smg_char_type, Str} |Tail]) when list(Str) ->
     Len = 2 * length(Str),
     List = [?int32(Len) | lists:map(fun(I) -> ?int16(I) end, Str)] ,
     [List| mk_args(Tail)].
-    
+
 
 open_slang_driver() ->
     erl_ddll:start(),
@@ -628,17 +628,17 @@ debug(File, Line, Fmt, Args) ->
 	      Fd ->
 		  Fd
 	  end,
-    
+
     Str = lists:flatten(
             io_lib:format("DEBUG ~s:~p, pid ~w: ~n",
-                          [filename:basename(File), 
+                          [filename:basename(File),
                            Line, self()])),
-    
+
     case io:format(DFD, Str ++ Fmt ++ "~n", Args) of
         ok -> ok;
         _ -> io:format(DFD, "ERROR ~p:~p: Pid ~w: (bad format)~n~p,~p~n",
 		       [File, Line, self(), Fmt, Args]),
-	     
+
 	     ok
     end.
 

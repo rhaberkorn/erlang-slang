@@ -18,14 +18,14 @@ int main ()
     SLkp_init ();
     SLang_init_tty (-1, 0, 0);
     SLsmg_init_smg ();
-    
+
 
     stuff();
 
     SLkp_getkey ();
-    
+
     /* do stuff .... */
-    
+
     SLsmg_reset_smg ();
     SLang_reset_tty ();
     return 0;

@@ -1,6 +1,6 @@
   slang Library erlang Programmer's Guide, V1.0
   Claes Wikstrom, klacke@bluetail.com
-       Adopted to erlang from the original 
+       Adopted to erlang from the original
        document by  John E. Davis, davis@space.mit.edu
 
    Thu Dec 14 00:05:42 CET 2000
@@ -155,7 +155,7 @@
   develop sophisticated platform-independent software.  In addition to
   providing the S-Lang extension language, the library provides
   facilities for screen management, keymaps, low-level terminal I/O,
-  etc.  
+  etc.
 
   This document describes the slang API for erlang programmers.
   Slang itself is a progaming language in its own right and
@@ -343,7 +343,7 @@
 
   Example:
 
-  %%  For MSDOS, use 34 as scan code 
+  %%  For MSDOS, use 34 as scan code
   case slang:init_tty(7,0,0) of
        -1 ->
 	  io:format("Failed to initialize tty ~n",[]),
@@ -499,16 +499,16 @@
 	loop() ->
 	       io:format("\nPress any key.  To quit, press Ctrl-G: ", []),
                case slang:input_pending (50) of  %% 5secs
-		    0 ->  
+		    0 ->
 		        io:format("waited toooo long ~n",[]),
 		        ok;
                     _ ->
 			Ch = slang:getkey(),
 			case slang:getvar(error) of
-			     ?USER_BREAK ->  
+			     ?USER_BREAK ->
 				io:format("Ctrl-G pressed ~n",[]),
-                                
-		      
+
+
                   {
                      fputs ("Waited too long! Bye\n", stdout);
                      break;

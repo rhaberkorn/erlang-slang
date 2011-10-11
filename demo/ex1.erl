@@ -1,7 +1,7 @@
 %%%----------------------------------------------------------------------
 %%% File    : ex1.erl
 %%% Author  : Claes Wikstrom <klacke@kaja.hemma.net>
-%%% Purpose : 
+%%% Purpose :
 %%% Created : 22 Nov 2000 by Claes Wikstrom <klacke@kaja.hemma.net>
 %%%----------------------------------------------------------------------
 

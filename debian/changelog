@@ -1,0 +1,21 @@
+erlang-slang (1.0-3) unstable; urgency=low
+
+  * Moved to Non-US :  (closes: #133467) (closes: #133756)
+
+ -- Mark Ng <ng@debian.org>  Thu, 14 Feb 2002 18:25:30 +1100
+
+erlang-slang (1.0-2) unstable; urgency=low
+
+  * Applied David N. Welton's patch :  (closes: #121460)
+  	- powerPC build.
+  	- uses new erl_driver.h instead of driver.h interface.
+
+ -- Mark Ng <ng@debian.org>  Mon,  7 Jan 2002 01:11:38 +1100
+
+erlang-slang (1.0-1) unstable; urgency=low
+
+  * Initial Release  (closes: #101742)
+
+ -- Mark Ng <ng@debian.org>  Sun, 28 Oct 2001 00:28:40 +1000
+
+

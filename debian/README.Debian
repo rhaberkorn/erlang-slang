@@ -1,0 +1,16 @@
+erlang-slang for Debian
+-----------------------
+
+
+Known Problems:
+
+- The erlang repl doesn't seem to like erlang-slang mucking around with
+  the terminal much. A work around is to compile your erlang sources
+  using erlc and run them using erl -noshell -s Mod Fun
+
+- The documentation is not complete though usable.
+
+
+-------------------
+
+ -- Mark Ng <ng@debian.org>, Sat,  7 Jul 2001 15:11:20 +1000
