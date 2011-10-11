@@ -4,7 +4,7 @@
 ifeq ($(TYPE),debug)
 EXTRA_FLAGS = -g
 else
-EXTRA_FLAGS = 
+EXTRA_FLAGS =
 endif
 
 include  ../include.mk
@@ -21,7 +21,7 @@ slang_drv.o: slang_drv.c
 
 ../priv/slang_drv.so:	slang_drv.o
 	mkdir -p ../priv
-	$(LD_SHARED) -o ../priv/slang_drv.so slang_drv.o \
+	$(CC) -shared -o ../priv/slang_drv.so slang_drv.o \
 	-L/usr/local/lib -lslang
 
 clean:

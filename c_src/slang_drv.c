@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <string.h>
 #include "erl_driver.h"
 #include <slang.h>
 #include <signal.h>
@@ -184,9 +185,7 @@
 
 
 
-static long sl_start();
-static int sl_stop(), sl_read();
-static struct erl_drv_entry sl_erl_drv_entry;
+static ErlDrvEntry sl_erl_drv_entry;
 
 
 static int wait_for = 0;
@@ -242,15 +241,15 @@ SLsmg_Char_Type *decode_smg_char_type(char **buf)
 }
 
 
-static long sl_start(long port, char *buf)
+static ErlDrvData sl_start(ErlDrvPort port, char *buf)
 {
-    return port;
+    return (ErlDrvData)port;
 }
 
 
-static int sl_stop(ErlDrvPort port)
+static void sl_stop(ErlDrvData port)
 {
-    return 1;
+    return;
 }
 
 static int ret_int_int(ErlDrvPort port, int i, int j)
@@ -282,8 +281,9 @@ static int ret_string(ErlDrvPort port, char *str)
 }
 
 
-static int sl_output(ErlDrvPort port, char *buf, int len)
+static void sl_output(ErlDrvData drv_data, char *buf, int len)
 {
+    ErlDrvPort port = (ErlDrvPort)drv_data;
     int x,y,z,v,w;
     char *str, *t1, *t2, *t3;
     int ret;
@@ -308,84 +308,89 @@ static int sl_output(ErlDrvPort port, char *buf, int len)
 	flow_ctl = get_int32(buf); buf+= 4;
 	opost = get_int32(buf); buf+= 4;
 	ret = SLang_init_tty (abort_char,flow_ctl, opost);
-	return ret_int(port, ret);
+	ret_int(port, ret);
+	return;
     }
 
     case SET_ABORT_FUNCTION: {
 	SLang_set_abort_signal (NULL);
-	return ret_int(port, 0);
+	ret_int(port, 0);
+	return;
     }
     case GETKEY: {
 	unsigned int key;
 	if (SLang_input_pending (0) == 0) {
 	    wait_for = GETKEY;
 	    driver_select(port, 0, DO_READ, 1);
-	    return 0;
+	    return;
 	}
 	x = SLang_getkey ();
-	return ret_int(port, x);
+	ret_int(port, x);
+	return;
     }
     /* read a symbol */
     case KP_GETKEY: {
 	if (SLang_input_pending (0) == 0) {
 	    wait_for = KP_GETKEY;
 	    driver_select(port, 0, DO_READ, 1);
-	    return 0;
+	    return;
 	}
 	x = SLkp_getkey ();
-	return ret_int(port, x);
+	ret_int(port, x);
+	return;
     }
     case UNGETKEY: {
 	unsigned char  key =  (unsigned char) *buf;
 	SLang_ungetkey (key);
-	return 0;
+	return;
     }
     case RESET_TTY: {
 	SLang_reset_tty();
-	return 0;
+	return;
     }
     case KP_INIT: {
-	return ret_int(port, SLkp_init ());
+	ret_int(port, SLkp_init ());
+	return;
     }
     case SETVAR: {
 	x = get_int32(buf);buf+= 4;
 	y = get_int32(buf);
 	switch (x) {
 	case  esl_baud_rate:
-	    SLang_TT_Baud_Rate = y; return 0;
+	    SLang_TT_Baud_Rate = y; return;
 	case esl_read_fd:
-	    return 0;
+	    return;
 	case esl_abort_char:
-	    SLang_Abort_Char = y; return 0;
+	    SLang_Abort_Char = y; return;
 	case esl_ignore_user_abort:
-	    SLang_Ignore_User_Abort=y; return 0;
+	    SLang_Ignore_User_Abort=y; return;
 	case esl_input_buffer_len :
-	    SLang_Input_Buffer_Len=y; return 0;
+	    SLang_Input_Buffer_Len=y; return;
 	case  esl_keyboard_quit:
-	    SLKeyBoard_Quit=y; return 0;
+	    SLKeyBoard_Quit=y; return;
 	case esl_last_key_char:
-	    SLang_Last_Key_Char=y; return 0;
+	    SLang_Last_Key_Char=y; return;
 	case esl_rl_eof_char:
-	    SLang_RL_EOF_Char=y; return 0;
+	    SLang_RL_EOF_Char=y; return;
 	case esl_rline_quit:
-	    SLang_Rline_Quit=y; return 0;
+	    SLang_Rline_Quit=y; return;
 	case esl_screen_rows:
 	case  esl_screen_cols :
-	    return 0;
+	    return;
 	case esl_tab_width:
-	    SLsmg_Tab_Width=y; return 0;
+	    SLsmg_Tab_Width=y; return;
 	case  esl_newline_behaviour:
-	    SLsmg_Newline_Behavior=y; return 0;
+	    SLsmg_Newline_Behavior=y; return;
 	case esl_error:
-	    SLang_Error=y; return 0;
+	    SLang_Error=y; return;
 	case esl_version:
-	    return 0;
+	    return;
 	case  esl_backspace_moves :
-	    SLsmg_Backspace_Moves=y; return 0;
+	    SLsmg_Backspace_Moves=y; return;
 	case esl_display_eight_bit:
-	    SLsmg_Display_Eight_Bit=y; return 0;
+	    SLsmg_Display_Eight_Bit=y; return;
 	default:
-	    return 0;
+	    return;
 	}
     }
 
@@ -393,41 +398,59 @@ static int sl_output(ErlDrvPort port, char *buf, int len)
 	x = get_int32(buf);
 	switch (x) {
 	case  esl_baud_rate:
-	    return ret_int(port, SLang_TT_Baud_Rate);
+	    ret_int(port, SLang_TT_Baud_Rate);
+	    return;
 	case esl_read_fd:
-	    return ret_int(port,  SLang_TT_Read_FD);
+	    ret_int(port,  SLang_TT_Read_FD);
+	    return;
 	case esl_abort_char:
-	    return (ret_int(port, SLang_Abort_Char));
+	    ret_int(port, SLang_Abort_Char);
+	    return;
 	case esl_ignore_user_abort:
-	    return ret_int(port, SLang_Ignore_User_Abort);
+	    ret_int(port, SLang_Ignore_User_Abort);
+	    return;
 	case esl_input_buffer_len :
-	    return ret_int(port, SLang_Input_Buffer_Len);
+	    ret_int(port, SLang_Input_Buffer_Len);
+	    return;
 	case  esl_keyboard_quit:
-	    return ret_int(port, SLKeyBoard_Quit);
+	    ret_int(port, SLKeyBoard_Quit);
+	    return;
 	case esl_last_key_char:
-	    return ret_int(port, SLang_Last_Key_Char);
+	    ret_int(port, SLang_Last_Key_Char);
+	    return;
 	case esl_rl_eof_char:
-	    return ret_int(port, SLang_RL_EOF_Char);
+	    ret_int(port, SLang_RL_EOF_Char);
+	    return;
 	case esl_rline_quit:
-	    return ret_int(port, SLang_Rline_Quit);
+	    ret_int(port, SLang_Rline_Quit);
+	    return;
 	case esl_screen_rows:
-	    return ret_int(port, SLtt_Screen_Rows);
+	    ret_int(port, SLtt_Screen_Rows);
+	    return;
 	case  esl_screen_cols :
-	    return ret_int(port, SLtt_Screen_Cols);
+	    ret_int(port, SLtt_Screen_Cols);
+	    return;
 	case esl_tab_width:
-	    return ret_int(port, SLsmg_Tab_Width);
+	    ret_int(port, SLsmg_Tab_Width);
+	    return;
 	case  esl_newline_behaviour:
-	    return ret_int(port, SLsmg_Newline_Behavior);
+	    ret_int(port, SLsmg_Newline_Behavior);
+	    return;
 	case esl_error:
-	    return ret_int(port, SLang_Error);
+	    ret_int(port, SLang_Error);
+	    return;
 	case esl_version:
-	    return ret_int(port, SLang_Version);
+	    ret_int(port, SLang_Version);
+	    return;
 	case  esl_backspace_moves :
-	    return ret_int(port, SLsmg_Backspace_Moves);
+	    ret_int(port, SLsmg_Backspace_Moves);
+	    return;
 	case esl_display_eight_bit:
-	    return  ret_int(port, SLsmg_Display_Eight_Bit);
+	    ret_int(port, SLsmg_Display_Eight_Bit);
+	    return;
 	default:
-	    return ret_int(port, -1);
+	    ret_int(port, -1);
+	    return;
 	}
     }
 
@@ -444,54 +467,55 @@ static int sl_output(ErlDrvPort port, char *buf, int len)
 	v = get_int32(buf); buf+= 4;
 	ch = *buf;
 	SLsmg_fill_region(x, y,z,v,ch);
-	return 0;
+	return;
     }
     case SMG_SET_CHAR_SET: {
 	x = get_int32(buf); buf+= 4;
 	SLsmg_set_char_set(x);
-	return 0;
+	return;
     }
     case SMG_SUSPEND_SMG: {
-	return ret_int(port, SLsmg_suspend_smg());
+	ret_int(port, SLsmg_suspend_smg());
+	return;
     }
     case SMG_RESUME_SMG: {
 	ret_int(port, SLsmg_resume_smg());
     }
     case SMG_ERASE_EOL: {
 	SLsmg_erase_eol();
-	return 0;
+	return;
     }
     case SMG_GOTORC: {
 	x = get_int32(buf); buf+= 4;
 	y = get_int32(buf); buf+= 4;
 	SLsmg_gotorc(x,  y);
-	return 0;
+	return;
     }
     case SMG_ERASE_EOS: {
 	SLsmg_erase_eos();
-	return 0;
+	return;
     }
     case SMG_REVERSE_VIDEO: {
 	SLsmg_reverse_video();
-	return 0;
+	return;
     }
     case SMG_SET_COLOR: {
 	x = get_int32(buf); buf+= 4;
 	SLsmg_set_color(x);
-	return 0;
+	return;
     }
     case SMG_NORMAL_VIDEO: {
 	SLsmg_normal_video();
-	return 0;
+	return;
     }
     case SMG_WRITE_STRING: {
 	SLsmg_write_string(buf);
-	return 0;
+	return;
     }
     case SMG_WRITE_CHAR: {
 	ch = *buf;
 	SLsmg_write_char(ch);
-	return 0;
+	return;
     }
     case SMG_WRITE_WRAPPED_STRING: {
 	t1 = buf;
@@ -502,46 +526,51 @@ static int sl_output(ErlDrvPort port, char *buf, int len)
 	v = get_int32(buf); buf+= 4;
 	w = get_int32(buf); buf+= 4;
 	SLsmg_write_wrapped_string(t1, x,y,z,v,w);
-	return 0;
+	return;
     }
     case SMG_CLS: {
 	SLsmg_cls();
-	return 0;
+	return;
     }
     case SMG_REFRESH: {
 	SLsmg_refresh();
-	return 0;
+	return;
     }
     case SMG_TOUCH_LINES: {
 	x = get_int32(buf); buf+= 4;
 	y = get_int32(buf); buf+= 4;
 	SLsmg_touch_lines(x, y);
-	return 0;
+	return;
     }
     case SMG_TOUCH_SCREEN: {
 #if (SLANG_VERSION < 10400 )
-	return ret_int(port, -1);
+	ret_int(port, -1);
+	return;
 #else
 	SLsmg_touch_screen();
 #endif
-	return 0;
+	return;
     }
     case SMG_INIT_SMG: {
-	return ret_int(port,  SLsmg_init_smg());
+	ret_int(port,  SLsmg_init_smg());
+	return;
     }
     case SMG_REINIT_SMG: {
 #if (SLANG_VERSION < 10400 )
-	return ret_int(port, -1);
+	ret_int(port, -1);
+	return;
 #else
-	return ret_int(port, SLsmg_reinit_smg());
+	ret_int(port, SLsmg_reinit_smg());
+	return;
 #endif
     }
     case SMG_RESET_SMG: {
 	SLsmg_reset_smg();
-	return 0;
+	return;
     }
     case SMG_CHAR_AT: {
-	return ret_int(port, SLsmg_char_at());
+	ret_int(port, SLsmg_char_at());
+	return;
     }
     case SMG_SET_SCREEN_START: {
 	int *ip1, *ip2;
@@ -549,24 +578,25 @@ static int sl_output(ErlDrvPort port, char *buf, int len)
 	*ip2 = get_int32(buf); buf+= 4;
 
 	SLsmg_set_screen_start(ip1, ip2);
-	return ret_int_int(port, *ip1, *ip2);
+	ret_int_int(port, *ip1, *ip2);
+	return;
     }
     case SMG_DRAW_HLINE: {
 	x = get_int32(buf); buf+= 4;
 	SLsmg_draw_hline(x);
-	return 0;
+	return;
     }
     case SMG_DRAW_VLINE: {
 	x = get_int32(buf); buf+= 4;
 	SLsmg_draw_vline(x);
-	return 0;
+	return;
     }
     case SMG_DRAW_OBJECT: {
 	x = get_int32(buf); buf+= 4;
 	y = get_int32(buf); buf+= 4;
 	x = get_int32(buf); buf+= 4;
 	SLsmg_draw_object(x, y,z);
-	return 0;
+	return;
     }
     case SMG_DRAW_BOX: {
 	x = get_int32(buf); buf+= 4;
@@ -574,26 +604,28 @@ static int sl_output(ErlDrvPort port, char *buf, int len)
 	z = get_int32(buf); buf+= 4;
 	v = get_int32(buf); buf+= 4;
 	SLsmg_draw_box(x, y,z,v);
-	return 0;
+	return;
     }
     case SMG_GET_COLUMN: {
-	return ret_int(port, SLsmg_get_column());
+	ret_int(port, SLsmg_get_column());
+	return;
     }
     case SMG_GET_ROW: {
-	return ret_int(port, SLsmg_get_row());
+	ret_int(port, SLsmg_get_row());
+	return;
     }
 
     case SMG_FORWARD: {
 	x = get_int32(buf); buf+= 4;
 	SLsmg_forward(x);
-	return 0;
+	return;
     }
     case SMG_WRITE_COLOR_CHARS: {
 	SLsmg_Char_Type * sl;
 	sl = decode_smg_char_type(&buf);
 	x = get_int32(buf); buf+= 4;
 	SLsmg_write_color_chars(sl, x);
-	return 0;
+	return;
     }
     case SMG_READ_RAW: {
 	x = get_int32(buf); buf+= 4;
@@ -602,14 +634,15 @@ static int sl_output(ErlDrvPort port, char *buf, int len)
 	t1[1] = 1;
 	driver_output(port, t1, y+1);
 	free(t1);
-	return 0;
+	return;
     }
     case SMG_WRITE_RAW: {
 	SLsmg_Char_Type * sl;
 	sl = decode_smg_char_type(&buf);
 	x = get_int32(buf);
 	y = SLsmg_write_raw(sl, x);
-	return ret_int(port, y);
+	ret_int(port, y);
+	return;
     }
     case SMG_SET_COLOR_IN_REGION: {
 	x = get_int32(buf); buf+= 4;
@@ -618,7 +651,7 @@ static int sl_output(ErlDrvPort port, char *buf, int len)
 	v = get_int32(buf); buf+= 4;
 	w = get_int32(buf); buf+= 4;
 	SLsmg_set_color_in_region(x, y,z,v,w);
-	return 0;
+	return;
     }
 
 
@@ -628,72 +661,73 @@ static int sl_output(ErlDrvPort port, char *buf, int len)
 
     case TT_FLUSH_OUTPUT: {
 	ret = SLtt_flush_output();
-	return ret_int(port, ret);
+	ret_int(port, ret);
+	return;
     }
     case TT_SET_SCROLL_REGION: {
 
 	x = get_int32(buf); buf+=4;
 	y = get_int32(buf); buf+=4;
 	SLtt_set_scroll_region(x, y);
-	return 0;
+	return;
     }
     case TT_RESET_SCROLL_REGION: {
 	SLtt_reset_scroll_region();
-	return 0;
+	return;
     }
     case TT_REVERSE_VIDEO: {
 	SLtt_reverse_video (get_int32(buf));
-	return 0;
+	return;
     }
     case TT_BOLD_VIDEO: {
 	SLtt_begin_insert();
-	return 0;
+	return;
     }
     case TT_BEGIN_INSERT: {
 	SLtt_begin_insert();
-	return 0;
+	return;
     }
     case TT_END_INSERT: {
 	SLtt_end_insert();
-	return 0;
+	return;
     }
     case TT_DEL_EOL: {
 	SLtt_del_eol();
-	return 0;
+	return;
     }
     case TT_GOTO_RC: {
 	x = get_int32(buf); buf+=4;
 	y = get_int32(buf); buf+=4;
 	SLtt_goto_rc (x, y);
-	return 0;
+	return;
     }
     case TT_DELETE_NLINES: {
 	SLtt_delete_nlines(get_int32(buf));
-	return 0;
+	return;
     }
     case TT_DELETE_CHAR: {
 	SLtt_delete_char();
-	return 0;
+	return;
     }
     case TT_ERASE_LINE: {
 	SLtt_erase_line();
-	return 0;
+	return;
     }
     case TT_NORMAL_VIDEO: {
 	SLtt_normal_video();
-	return 0;
+	return;
     }
     case TT_CLS: {
 	SLtt_cls();
-	return 0;
+	return;
     }
     case TT_BEEP: {
 	SLtt_beep();
-	return 0;
+	return;
     }
     case TT_REVERSE_INDEX: {
 	SLtt_reverse_index(get_int32(buf));
-	return 0;
+	return;
     }
     case TT_SMART_PUTS: {
 	SLsmg_Char_Type *t1 ;
@@ -704,116 +738,124 @@ static int sl_output(ErlDrvPort port, char *buf, int len)
 	x = get_int32(buf); buf+=4;
 	y = get_int32(buf); buf+=4;
 	SLtt_smart_puts(t1, t2,x,y);
-	return 0;
+	return;
     }
     case TT_WRITE_STRING: {
 	SLtt_write_string (buf);
-	return 0;
+	return;
     }
     case TT_PUTCHAR: {
 	SLtt_putchar((char) get_int32(buf));
-	return 0;
+	return;
     }
     case TT_INIT_VIDEO: {
 	ret = SLtt_init_video ();
-	return ret_int(port, ret);
+	ret_int(port, ret);
+	return;
     }
     case TT_RESET_VIDEO: {
 	SLtt_reset_video ();
-	return 0;
+	return;
     }
     case TT_GET_TERMINFO: {
 	SLtt_get_terminfo();
-	return 0;
+	return;
     }
     case TT_GET_SCREEN_SIZE: {
 	SLtt_get_screen_size ();
-	return 0;
+	return;
     }
     case TT_SET_CURSOR_VISIBILITY: {
 	ret = SLtt_set_cursor_visibility (get_int32(buf));
-	return ret_int(port, ret);
+	ret_int(port, ret);
+	return;
     }
     case TT_SET_MOUSE_MODE: {
 	x = get_int32(buf); buf+=4;
 	y = get_int32(buf); buf+=4;
 	ret = SLtt_set_mouse_mode (x,y);
-	return ret_int(port, ret);
+	ret_int(port, ret);
+	return;
     }
 
     case TT_INITIALIZE: {
 	ret =SLtt_initialize (buf);
-	return ret_int(port, ret);
+	ret_int(port, ret);
+	return;
     }
     case TT_ENABLE_CURSOR_KEYS: {
 	SLtt_enable_cursor_keys();
-	return 0;
+	return;
     }
     case TT_SET_TERM_VTXXX: {
-	return 0;
+	return;
     }
     case TT_SET_COLOR_ESC: {
 	x = get_int32(buf); buf+=4;
 	SLtt_set_color_esc (x, buf);
-	return 0;
+	return;
     }
     case TT_WIDE_WIDTH: {
 	SLtt_narrow_width();
-	return 0;
+	return;
     }
     case TT_NARROW_WIDTH: {
 	SLtt_narrow_width();
-	return 0;
+	return;
     }
     case TT_SET_ALT_CHAR_SET: {
 	SLtt_set_alt_char_set (get_int32(buf));
-	return 0;
+	return;
     }
     case TT_WRITE_TO_STATUS_LINE: {
 	x = get_int32(buf); buf+=4;
 	SLtt_write_to_status_line (buf, x);
-	return 0;
+	return;
     }
     case TT_DISABLE_STATUS_LINE: {
 	SLtt_disable_status_line ();
-	return 0;
+	return;
     }
 
 
     case TT_TGETSTR: {
 	str = SLtt_tgetstr (buf);
-	return ret_string(port, str);
+	ret_string(port, str);
+	return;
     }
     case TT_TGETNUM: {
 	x = SLtt_tgetnum (buf);
-	return ret_int(port, x);
+	ret_int(port, x);
+	return;
     }
     case TT_TGETFLAG: {
 	x = SLtt_tgetflag (buf);
-	return  ret_int(port, x);
+	ret_int(port, x);
+	return;
     }
     case TT_TIGETENT: {
 	str = SLtt_tigetent (buf);
-	return ret_string(port, str);
+	ret_string(port, str);
+	return;
     }
     case TT_TIGETSTR: {
-	return 0;
+	return;
     }
     case TT_TIGETNUM: {
-	return 0;
+	return;
     }
 
     case SLTT_GET_COLOR_OBJECT: {
 	x = get_int32(buf); buf+=4;
 	y = SLtt_get_color_object (x);
-	return  ret_int(port, y);
-	return 0;
+	ret_int(port, y);
+	return;
     }
     case TT_SET_COLOR_OBJECT: {
 	x = get_int32(buf); buf+=4;
 	y = get_int32(buf); buf+=4;
 	SLtt_set_color_object (x, y);
-	return 0;
+	return;
     }
     case TT_SET_COLOR: {
 	x = get_int32(buf); buf+=4;
@@ -821,7 +863,7 @@ static int sl_output(ErlDrvPort port, char *buf, int len)
 	t2 = buf + (strlen(t1) + 1);
 	t3 = buf + (strlen(t1) + strlen(t2) + 2);
 	SLtt_set_color (x, t1, t2, t3);
-	return 0;
+	return;
     }
     case TT_SET_MONO: {
 	x = get_int32(buf); buf+=4;
@@ -829,44 +871,46 @@ static int sl_output(ErlDrvPort port, char *buf, int len)
 	buf += strlen(t1) + 1;
 	y = get_int32(buf);
 	SLtt_set_mono (x, t1, y);
-	return 0;
+	return;
     }
     case TT_ADD_COLOR_ATTRIBUTE: {
 	x = get_int32(buf); buf+=4;
 	y = get_int32(buf); buf+=4;
 	SLtt_add_color_attribute (x, y);
-	return 0;
+	return;
     }
     case TT_SET_COLOR_FGBG: {
 	x = get_int32(buf); buf+=4;
 	y = get_int32(buf); buf+=4;
 	z = get_int32(buf); buf+=4;
 	SLtt_set_color_fgbg (x, y, z);
-	return 0;
+	return;
     }
     case ISATTY: {
 	x = get_int32(buf); buf+=4;
-	return ret_int(port, isatty(x));
+	ret_int(port, isatty(x));
+	return;
     }
     case EFORMAT: {
 	fprintf(stderr, "%s", buf);
 	fflush(stderr);
-	return 0;
+	return;
     }
     case SIGNAL: {
 	x = get_int32(buf); buf+=4;
 	SLsignal(x_to_sig(x), sig_handler);
-	return 0;
+	return;
     }
     case SIGNAL_CHECK: {
 	/* polled */
 	if (signal_cought != 0)
 	    signal_cought = 0;
-	return ret_int(port, signal_cought);
+	ret_int(port, signal_cought);
+	return;
     }
 
     default:
-	return 0;
+	return;
     }
 }
 
@@ -874,40 +918,39 @@ static int sl_output(ErlDrvPort port, char *buf, int len)
 
 
 /* pending getkey request */
-sl_ready_input(ErlDrvPort port, int fd)
+void sl_ready_input(ErlDrvData drv_data, ErlDrvEvent fd)
 {
+    ErlDrvPort port = (ErlDrvPort)drv_data;
     unsigned int key;
     driver_select(port, 0, DO_READ, 0);
     switch (wait_for) {
     case GETKEY: {
 	key = SLang_getkey ();
-	return ret_int(port, key);
+	ret_int(port, key);
+	return;
     }
     case KP_GETKEY: {
 	key = SLkp_getkey ();
-	return ret_int(port, key);
+	ret_int(port, key);
+	return;
     }
-    return 0;
     }
 }
-
-
 
 /*
  * Initialize and return a driver entry struct
  */
 
-struct erl_drv_entry *driver_init(void *handle)
+DRIVER_INIT(slang_drv)
 {
-    sl_erl_drv_entry.init = NULL;   /* Not used */
+    memset(&sl_erl_drv_entry, 0, sizeof(sl_erl_drv_entry));
+
     sl_erl_drv_entry.start = sl_start;
     sl_erl_drv_entry.stop = sl_stop;
     sl_erl_drv_entry.output = sl_output;
     sl_erl_drv_entry.ready_input = sl_ready_input;
-    sl_erl_drv_entry.ready_output = NULL;
     sl_erl_drv_entry.driver_name = "slang_drv";
-    sl_erl_drv_entry.finish = NULL;
-    sl_erl_drv_entry.handle = handle;  /* MUST set this!!! */
+
     return &sl_erl_drv_entry;
 }
 
