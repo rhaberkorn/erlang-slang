@@ -318,7 +318,6 @@ static void sl_output(ErlDrvData drv_data, char *buf, int len)
 	return;
     }
     case GETKEY: {
-	unsigned int key;
 	if (SLang_input_pending (0) == 0) {
 	    wait_for = GETKEY;
 	    driver_select(port, 0, DO_READ, 1);
@@ -892,7 +891,7 @@ static void sl_output(ErlDrvData drv_data, char *buf, int len)
 	return;
     }
     case EFORMAT: {
-	fprintf(stderr, "%s", buf);
+	fputs(buf, stderr);
 	fflush(stderr);
 	return;
     }
