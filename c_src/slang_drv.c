@@ -1,10 +1,11 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "erl_driver.h"
-#include <slang.h>
 #include <signal.h>
+#include <unistd.h>
 
+#include <slang.h>
+#include <erl_driver.h>
 
 #if (SLANG_VERSION < 10400 )
 #define SLsmg_Char_Type unsigned short
@@ -232,7 +233,6 @@ SLsmg_Char_Type *decode_smg_char_type(char **buf)
 {
     static SLsmg_Char_Type mbuf[256];
     int i;
-    char *b = *buf;
     int len = get_int32(*buf); *buf+=4;
     for(i=0; i<len; i++) {
 	mbuf[i++] =  get_int16(*buf); *buf+=2;
@@ -572,12 +572,12 @@ static void sl_output(ErlDrvData drv_data, char *buf, int len)
 	return;
     }
     case SMG_SET_SCREEN_START: {
-	int *ip1, *ip2;
-	*ip1 = get_int32(buf); buf+= 4;
-	*ip2 = get_int32(buf); buf+= 4;
+	int ip1, ip2;
+	ip1 = get_int32(buf); buf+= 4;
+	ip2 = get_int32(buf); buf+= 4;
 
-	SLsmg_set_screen_start(ip1, ip2);
-	ret_int_int(port, *ip1, *ip2);
+	SLsmg_set_screen_start(&ip1, &ip2);
+	ret_int_int(port, ip1, ip2);
 	return;
     }
     case SMG_DRAW_HLINE: {
@@ -593,8 +593,8 @@ static void sl_output(ErlDrvData drv_data, char *buf, int len)
     case SMG_DRAW_OBJECT: {
 	x = get_int32(buf); buf+= 4;
 	y = get_int32(buf); buf+= 4;
-	x = get_int32(buf); buf+= 4;
-	SLsmg_draw_object(x, y,z);
+	z = get_int32(buf); buf+= 4;
+	SLsmg_draw_object(x, y, z);
 	return;
     }
     case SMG_DRAW_BOX: {
