@@ -903,14 +903,10 @@ static void sl_output(ErlDrvData drv_data, char *buf, int len)
     }
     case SIGNAL_CHECK: {
 	/* polled */
-	if (signal_cought != 0)
-	    signal_cought = 0;
 	ret_int(port, signal_cought);
+	signal_cought = 0;
 	return;
     }
-
-    default:
-	return;
     }
 }
 
