@@ -1,8 +1,9 @@
-
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+#include <arpa/inet.h>
+#include <stdint.h>
 
 #include <slang.h>
 #include <erl_driver.h>
@@ -15,27 +16,23 @@
 
 /* Standard set of integer macros  .. */
 
-#define get_int32(s) ((((unsigned char*) (s))[0] << 24) | \
-                      (((unsigned char*) (s))[1] << 16) | \
-                      (((unsigned char*) (s))[2] << 8)  | \
-                      (((unsigned char*) (s))[3]))
+#define get_int32(s) ntohl(*(uint32_t *)(s))
 
-#define put_int32(i, s) {((char*)(s))[0] = (char)((i) >> 24) & 0xff; \
-                        ((char*)(s))[1] = (char)((i) >> 16) & 0xff; \
-                        ((char*)(s))[2] = (char)((i) >> 8)  & 0xff; \
-                        ((char*)(s))[3] = (char)((i)        & 0xff);}
+#define put_int32(i, s) do {				\
+	*(uint32_t *)(s) = htonl((uint32_t)(i));	\
+} while (0)
 
-#define get_int16(s) ((((unsigned char*)  (s))[0] << 8) | \
-                      (((unsigned char*)  (s))[1]))
+#define get_int16(s) ntohs(*(uint16_t *)(s))
 
+#define put_int16(i, s) do {				\
+	*(uint16_t *)(s) = htons((uint16_t)(i));	\
+} while (0)
 
-#define put_int16(i, s) {((unsigned char*)(s))[0] = ((i) >> 8) & 0xff; \
-                        ((unsigned char*)(s))[1] = (i)         & 0xff;}
+#define get_int8(s) (*(uint8_t *)(s))
 
-#define get_int8(s) ((((unsigned char*)  (s))[0] ))
-
-
-#define put_int8(i, s) { ((unsigned char*)(s))[0] = (i)         & 0xff;}
+#define put_int8(i, s) do {				\
+	*(uint8_t *)(s) = (uint8_t)(i);			\
+} while (0)
 
 
 
