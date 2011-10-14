@@ -397,7 +397,7 @@ open_slang_driver() ->
 	    ok;
 	{error, What} ->
 	    error_logger:format("Failed to open driver: ~s~n", [erl_ddll:format_error(What)]),
-	    exit(nodriver)
+	    exit({nodriver, What})
     end,
     P = open_port({spawn, slang_drv}, []),
     P.
