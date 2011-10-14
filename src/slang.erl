@@ -14,7 +14,7 @@
 
 
 stop_user() ->
-    Flag=process_flag(trap_exit, true),
+    process_flag(trap_exit, true),
     {links, Lks0} = process_info(whereis(user),links),
     Lks = lists:delete(whereis(error_logger), Lks0),
 
@@ -88,12 +88,12 @@ ungetkey(Char) ->
 
 
 %% read slang lib global variables
-getvar(Var) when atom(Var) ->
+getvar(Var) when is_atom(Var) ->
     P = gp(),
     p_cmd(P, ?GETVAR, [{int, encode_var(Var)}], int).
 
 %% set slang lib global variables
-setvar(Var, IntegerValue) when atom(Var) ->
+setvar(Var, IntegerValue) when is_atom(Var) ->
     P = gp(),
     p_cmd(P, ?SETVAR, [{int, encode_var(Var)}, {int, IntegerValue}], void).
 
@@ -174,13 +174,13 @@ smg_write_string (Str) ->
     p_cmd(P, ?SMG_WRITE_STRING, [{string, Str}], void).
 
 smg_write_nstring (S, N) ->
-    L = lists:flatten(N),
+    L = lists:flatten(S),
     Len = length(L),
     if
 	Len < N ->
 	    smg_write_string(L ++ lists:duplicate(N - Len, 32));
 	true ->
-	    smg_write_string(L)
+	    smg_write_string(string:substr(L, 1, N))
     end.
 
 smg_write_char (Ch) ->
@@ -248,7 +248,7 @@ smg_draw_object (R, C, Obj) ->
 
 smg_draw_box (R, C, Dr, Dc) ->
     P = gp(),
-    p_cmd(P, ?SMG_DRAW_BOX, [], void).
+    p_cmd(P, ?SMG_DRAW_BOX, [{int, R}, {int, C}, {int, Dr}, {int, Dc}], void).
 
 smg_get_column () ->
     P = gp(),
@@ -366,15 +366,15 @@ upack_smg_char_type([X]) ->
 
 mk_args([]) ->
     [];
-mk_args([{int, Int} |Tail]) when integer(Int) ->
+mk_args([{int, Int} |Tail]) when is_integer(Int) ->
     [?int32(Int) | mk_args(Tail)];
-mk_args([{char, Char} |Tail]) when integer(Char) ->
+mk_args([{char, Char} |Tail]) when is_integer(Char) ->
     [Char| mk_args(Tail)];
-mk_args([{string, Str} |Tail]) when list(Str) ->
+mk_args([{string, Str} |Tail]) when is_list(Str) ->
     [Str, 0 | mk_args(Tail)];
-mk_args([{string, Str} |Tail]) when atom(Str) ->
+mk_args([{string, Str} |Tail]) when is_atom(Str) ->
     [atom_to_list(Str), 0 | mk_args(Tail)];
-mk_args([{smg_char_type, Str} |Tail]) when list(Str) ->
+mk_args([{smg_char_type, Str} |Tail]) when is_list(Str) ->
     Len = 2 * length(Str),
     List = [?int32(Len) | lists:map(fun(I) -> ?int16(I) end, Str)] ,
     [List| mk_args(Tail)].
@@ -384,9 +384,8 @@ open_slang_driver() ->
     erl_ddll:start(),
     Path=case code:priv_dir(slang) of
 	     {error, _} ->
-		 {ok, Dir, _} =  regexp:sub(code:which(slang),
-					    "ebin/slang.beam",[]),
-		 Dir ++ "priv";
+		 CodePath = code:which(slang),
+		 string:substr(CodePath, 1, string:rstr(CodePath, "ebin/slang.beam",[])-1) ++ "priv";
 	     Dir ->
 		 Dir
 	 end,
