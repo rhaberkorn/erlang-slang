@@ -7,6 +7,7 @@ ERL_CPPFLAGS := $(shell erl -noinput -eval \
 
 override CFLAGS += -Wall -fpic
 override CPPFLAGS += -I$(LIBSLANG)/src $(ERL_CPPFLAGS)
+override LDFLAGS += -fpic
 
 all : $(PRIV)/slang_drv.so
 
