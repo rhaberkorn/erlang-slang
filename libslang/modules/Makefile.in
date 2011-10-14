@@ -1,0 +1,56 @@
+# -*- sh -*-
+MODULES = smg-module.so termios-module.so select-module.so fcntl-module.so \
+  varray-module.so pcre-module.so
+#---------------------------------------------------------------------------
+CC_SHARED 	= @CC_SHARED@
+#---------------------------------------------------------------------------
+# Installation location of the slang library
+#---------------------------------------------------------------------------
+prefix 		= @prefix@
+exec_prefix 	= @exec_prefix@
+SLANG_INC	= -I@includedir@
+SLANG_LIB	= -L@libdir@ -lslang
+#---------------------------------------------------------------------------
+# Installation location of the modules
+#---------------------------------------------------------------------------
+MODULE_INSTALL_DIR = @libdir@/slang/modules
+INSTALL		= @INSTALL@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSDIR	= ../autoconf/mkinsdir.sh
+#---------------------------------------------------------------------------
+# DESTDIR is designed to facilitate making packages.  Normally it is empty
+#---------------------------------------------------------------------------
+DESTDIR =
+DEST_MODULEDIR = $(DESTDIR)$(MODULE_INSTALL_DIR)
+#---------------------------------------------------------------------------
+RPATH = @RPATH@
+
+LIBS = $(RPATH) $(SLANG_LIB) $(DL_LIB) -lm
+INCS = $(SLANG_INC)
+
+all: $(MODULES)
+
+smg-module.so: smg-module.c
+	$(CC_SHARED) $(INCS) smg-module.c -o smg-module.so $(LIBS)
+newt-module.so: newt-module.c
+	$(CC_SHARED) $(INCS) newt-module.c -o newt-module.so -lnewt $(LIBS)
+termios-module.so: termios-module.c
+	$(CC_SHARED) $(INCS) termios-module.c -o termios-module.so $(LIBS)
+select-module.so: select-module.c
+	$(CC_SHARED) $(INCS) select-module.c -o select-module.so $(LIBS)
+fcntl-module.so: fcntl-module.c
+	$(CC_SHARED) $(INCS) fcntl-module.c -o fcntl-module.so $(LIBS)
+varray-module.so: varray-module.c
+	$(CC_SHARED) $(INCS) varray-module.c -o varray-module.so $(LIBS)
+pcre-module.so: pcre-module.c
+	$(CC_SHARED) $(INCS) pcre-module.c -o pcre-module.so -lpcre $(LIBS)
+
+install: all
+	-$(MKINSDIR) $(DEST_MODULEDIR)
+	@for i in $(MODULES); \
+	do \
+		echo $(INSTALL_DATA) $$i $(DEST_MODULEDIR); \
+		$(INSTALL_DATA) $$i $(DEST_MODULEDIR); \
+	done
+clean:
+	-/bin/rm -f $(MODULES) *~

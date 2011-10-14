@@ -1,0 +1,5943 @@
+_isnull
+
+ SYNOPSIS
+   Check array for NULL elements
+
+ USAGE
+   Char_Type[] = _isnull (a[])
+
+ DESCRIPTION
+   This function may be used to test for the presence of NULL elements
+   of an array.   Specifically, it returns a `Char_Type' array of
+   with the same number of elements and dimensionality of the input
+   array.  If an element of the input array is NULL, then the
+   corresponding element of the output array will be set to 1,
+   otherwise it will be set to 0.
+
+ EXAMPLE
+   Set all NULL elements of a string array `A' to the empty
+   string `""':
+
+        A[where(_isnull(A))] = "";
+
+
+ NOTES
+   It is important to understand the difference between `A==NULL'
+   and `_isnull(A)'.  The latter tests all elements of `A'
+   against NULL, whereas the former only tests `A' itself.
+
+ SEE ALSO
+   where, array_map
+--------------------------------------------------------------
+
+_reshape
+
+ SYNOPSIS
+   Copy an array to a new shape
+
+ USAGE
+   Array_Type _reshape (Array_Type A, Array_Type I)
+
+ DESCRIPTION
+   The `_reshape' function creates a copy of an array `A',
+   reshapes it to the form specified by `I' and returns the result.
+   The elements of `I' specify the new dimensions of the copy of
+   `A' and must be consistent with the number of elements `A'.
+
+ EXAMPLE
+   If `A' is a `100' element 1-d array, a new array 2-d array of 
+   size `20' by `5' may be created from the elements of `A'
+   by
+
+         A = _reshape (A, [20, 5]);
+
+   In this example, the original array was no longer needed.  Hence, it
+   is preferable to make use of the `__tmp' operator to avoid the
+   creation of a new array, i.e.,
+
+         A = _reshape (__tmp(A), [20,5]);
+
+
+ NOTES
+   The `reshape' function performs a similar function to
+   `_reshape'.  In fact, the `_reshape' function could have been
+   implemented via:
+
+        define _reshape (a, i)
+        {
+           a = @a;     % Make a new copy
+           reshape (a, i);
+           return a;
+        }
+
+
+ SEE ALSO
+   reshape, array_info
+--------------------------------------------------------------
+
+array_info
+
+ SYNOPSIS
+   Returns information about an array
+
+ USAGE
+   (Array_Type, Integer_Type, DataType_Type) array_info (Array_Type a)
+
+ DESCRIPTION
+   The `array_info' function returns information about the array `a'.
+   It returns three values: an 1-d integer array specifying the
+   size of each dimension of `a', the number of dimensions of
+   `a', and the data type of `a'.
+
+ EXAMPLE
+   The `array_info' function may be used to find the number of rows
+   of an array:
+
+       define num_rows (a)
+       {
+          variable dims, num_dims, data_type;
+   
+          (dims, num_dims, data_type) = array_info (a);
+          return dims [0];
+       }
+
+   For 1-d arrays, this information is more easily obtained from the
+   `length' function.
+
+ SEE ALSO
+   typeof, reshape, length, _reshape
+--------------------------------------------------------------
+
+array_map
+
+ SYNOPSIS
+   Apply a function to each element of an array
+
+ USAGE
+   Array_Type array_map (type, func, arg0, ...)
+
+       DataType_Type type;
+       Ref_Type func;
+
+
+ DESCRIPTION
+   The `array_map' function may be used to apply a function to each
+   element of an array and returns the result as an array of a
+   specified type.  The `type' parameter indicates what kind of
+   array should be returned and generally corresponds to the return
+   type of the function.  The `arg0' parameter should be an array
+   and is used to determine the dimensions of the resulting array.  If
+   any subsequent arguments correspond to an array of the same size,
+   then those array elements will be passed in parallel with the first
+   arrays arguments.
+
+ EXAMPLE
+   The first example illustrates how to apply the `strlen' function
+   to an array of strings:
+
+        S = ["", "Train", "Subway", "Car"];
+        L = array_map (Integer_Type, &strlen, S);
+
+   This is equivalent to:
+
+        S = ["", "Train", "Subway", "Car"];
+        L = Integer_Type [length (S)];
+        for (i = 0; i < length (S); i++) L[i] = strlen (S[i]);
+
+   
+   Now consider an example involving the `strcat' function:
+
+        files = ["slang", "slstring", "slarray"];
+   
+        exts = ".c";
+        cfiles = array_map (String_Type, &strcat, files, exts);
+        % ==> cfiles = ["slang.c slstring.c slarray.c"];
+   
+        exts =  [".a",".b",".c"];
+        xfiles = array_map (String_Type, &strcat, files, exts);
+        % ==> xfiles = ["slang.a", "slstring.b", "slarray.c"];
+
+
+ NOTES
+   Many mathemetical functions already work transparantly on arrays.
+   For example, the following two statements produce identical results:
+
+        B = sin (A);
+        B = array_map (Double_Type, &sin, A);
+
+
+ SEE ALSO
+   array_info, strlen, strcat, sin
+--------------------------------------------------------------
+
+array_sort
+
+ SYNOPSIS
+   Sort an array
+
+ USAGE
+   Array_Type array_sort (Array_Type a [, String_Type or Ref_Type f])
+
+ DESCRIPTION
+   `array_sort' sorts the array `a' into ascending order and
+   returns an integer array that represents the result of the sort. If
+   the optional second parameter `f' is present, the function
+   specified by `f' will be used to compare elements of `a';
+   otherwise, a built-in sorting function will be used.  
+   
+   If `f' is present, then it must be either a string representing
+   the name of the comparison function, or a reference to the function.
+   The sort function represented by `f' must be a S-Lang
+   user-defined function that takes two arguments.  The function must
+   return an integer that is less than zero if the first parameter is
+   considered to be less than the second, zero if they are equal, and a
+   value greater than zero if the first is greater than the second.
+   
+   If the comparision function is not specified, then a built-in comparison
+   function appropriate for the data type will be used.  For example,
+   if `a' is an array of character strings, then the sort will be
+   preformed using `strcmp'.
+   
+   The integer array returned by this function is simply an index that
+   indicates the order of the sorted array.  The input array `a' is
+   not changed.
+
+ EXAMPLE
+   An array of strings may be sorted using the `strcmp' function
+   since it fits the specification for the sorting function described
+   above:
+
+        variable A = String_Type [3];
+        A[0] = "gamma"; A[1] = "alpha"; A[2] = "beta";
+   
+        variable I = array_sort (A, &strcmp);
+
+   Alternatively, one may use
+
+        variable I = array_sort (A);     
+
+   to use the built-in comparison function.
+   
+   After the `array_sort' has executed, the variable `I' will
+   have the values `[2, 0, 1]'.  This array can be used to
+   re-shuffle the elements of `A' into the sorted order via the
+   array index expression `A = A[I]'.
+
+ SEE ALSO
+   strcmp
+--------------------------------------------------------------
+
+cumsum
+
+ SYNOPSIS
+   Compute the cumulative sum of an array
+
+ USAGE
+   result = cumsum (Array_Type a [, Int_Type dim])
+
+ DESCRIPTION
+   The `cumsum' function performs a cumulative sum over the
+   elements of a numeric array and returns the resulting.  If a second
+   argument is given, then it specifies the dimension of the array to
+   be summed over.  For example, the cumulative sum of
+   `[1,2,3,4]', is the array `[1,1+2,1+2+3,1+2+3+4]', i.e.,
+   `[1,3,6,10]'.
+
+ SEE ALSO
+   sum
+--------------------------------------------------------------
+
+init_char_array
+
+ SYNOPSIS
+   Initialize an array of characters
+
+ USAGE
+   init_char_array (Array_Type a, String_Type s)
+
+ DESCRIPTION
+   The `init_char_array' function may be used to initialize a
+   character array `a' by setting the elements of the array
+   `a' to the corresponding characters of the string `s'.
+
+ EXAMPLE
+   The statements
+
+        variable a = Char_Type [10];
+        init_char_array (a, "HelloWorld");
+
+   creates an character array and initializes its elements to the
+   characters in the string `"HelloWorld"'.
+
+ NOTES
+   The character array must be large enough to hold all the characters
+   of the initialization string.
+
+ SEE ALSO
+   bstring_to_array, strlen, strcat
+--------------------------------------------------------------
+
+length
+
+ SYNOPSIS
+   Get the length of an object
+
+ USAGE
+   Integer_Type length (obj)
+
+ DESCRIPTION
+   The `length' function may be used to get information about the
+   length of an object.  For simple scalar data-types, it returns 1.
+   For arrays, it returns the total number of elements of the array.
+
+ NOTES
+   If `obj' is a string, `length' returns 1 because a
+   `String_Type' object is considered to be a scalar.  To get the
+   number of characters in a string, use the `strlen' function.
+
+ SEE ALSO
+   array_info, typeof, strlen
+--------------------------------------------------------------
+
+max
+
+ SYNOPSIS
+   Get the maximum value of an array
+
+ USAGE
+   result = max (Array_Type a [,Int_Type dim])
+
+ DESCRIPTION
+   The `max' function examines the elements of a numeric array and
+   returns the value of the largest element.  If a second argument is
+   given, then it specifies the dimension of the array to be searched.
+   In this case, an array of dimension one less than that of the input array
+   will be returned with the corresponding elements in the specified
+   dimension replaced by the minimum value in that dimension.
+
+ EXAMPLE
+   Consider the 2-d array
+
+         1       2       3       4       5
+         6       7       8       9       10
+
+   generated by
+
+         a = _reshape ([1:10], [2, 5]);
+
+   Then `max(a)' will return `10', and `max(a,0)' will return
+   a 1-d array with elements
+
+         6       7       8       9       10
+
+
+ SEE ALSO
+   max, sum, reshape
+--------------------------------------------------------------
+
+min
+
+ SYNOPSIS
+   Get the minimum value of an array
+
+ USAGE
+   result = min (Array_Type a [,Int_Type dim])
+
+ DESCRIPTION
+   The `min' function examines the elements of a numeric array and
+   returns the value of the smallest element.  If a second argument is
+   given, then it specifies the dimension of the array to be searched.
+   In this case, an array of dimension one less than that of the input array
+   will be returned with the corresponding elements in the specified
+   dimension replaced by the minimum value in that dimension.
+
+ EXAMPLE
+   Consider the 2-d array
+
+         1       2       3       4       5
+         6       7       8       9       10
+
+   generated by
+
+         a = _reshape ([1:10], [2, 5]);
+
+   Then `min(a)' will return `1', and `min(a,0)' will return
+   a 1-d array with elements
+
+         1        2       3       4       5
+
+
+ SEE ALSO
+   max, sum, reshape
+--------------------------------------------------------------
+
+reshape
+
+ SYNOPSIS
+   Reshape an array
+
+ USAGE
+   reshape (Array_Type A, Array_Type I)
+
+ DESCRIPTION
+   The `reshape' function changes the size of `A' to have the size
+   specified by the 1-d integer array `I'.  The elements of `I'
+   specify the new dimensions of `A' and must be consistent with
+   the number of elements `A'.
+
+ EXAMPLE
+   If `A' is a `100' element 1-d array, it can be changed to a
+   2-d `20' by `5' array via
+
+         reshape (A, [20, 5]);
+
+   However, `reshape(A, [11,5])' will result in an error because
+   the `[11,5]' array specifies `55' elements.
+
+ NOTES
+   Since `reshape' modifies the shape of an array, and arrays are
+   treated as references, then all references to the array will
+   reference the new shape.  If this effect is unwanted, then use the 
+   `_reshape' function instead.
+
+ SEE ALSO
+   _reshape, array_info
+--------------------------------------------------------------
+
+sum
+
+ SYNOPSIS
+   Sum over the elements of an array
+
+ USAGE
+   result = sum (Array_Type a [, Int_Type dim])
+
+ DESCRIPTION
+   The `sum' function sums over the elements of a numeric array and
+   returns its result.  If a second argument is given, then it
+   specifies the dimension of the array to be summed over.  In this
+   case, an array of dimension one less than that of the input array
+   will be returned.
+   
+   If the input array is an integer type, then the resulting value will
+   be a `Double_Type'.  If the input array is a `Float_Type',
+   then the result will be a `Float_Type'.
+
+ EXAMPLE
+   The mean of an array `a' of numbers is
+
+       sum(a)/length(a)
+
+
+ SEE ALSO
+   cumsum, transpose, reshape
+--------------------------------------------------------------
+
+transpose
+
+ SYNOPSIS
+   Transpose an array
+
+ USAGE
+   Array_Type transpose (Array_Type a)
+
+ DESCRIPTION
+   The `transpose' function returns the transpose of a specified
+   array.  By definition, the transpose of an array, say one with
+   elements `a[i,j,...k]' is an array whose elements are
+   `a[k,...,j,i]'.
+
+ SEE ALSO
+   _reshape, reshape, sum, array_info
+--------------------------------------------------------------
+
+where
+
+ SYNOPSIS
+   Get indices where an integer array is non-zero
+
+ USAGE
+   Array_Type where (Array_Type a)
+
+ DESCRIPTION
+   The `where' function examines an numeric array `a' and
+   returns an integer array giving the indices of `a'
+   where the corresponding element of `a' is non-zero.
+   
+   Although this function may appear to be simple or even trivial, it
+   is arguably one of the most important and powerful functions for
+   manipulating arrays.
+
+ EXAMPLE
+   Consider the following:
+
+       variable X = [0.0:10.0:0.01];
+       variable A = sin (X);
+       variable I = where (A < 0.0);
+       A[I] = cos (X) [I];
+
+   Here the variable `X' has been assigned an array of doubles
+   whose elements range from `0.0' through `10.0' in
+   increments of `0.01'.  The second statement assigns `A' to
+   an array whose elements are the `sin' of the elements of `X'.
+   The third statement uses the where function to get the indices of
+   the elements of `A' that are less than `0.0'.  Finally, the
+   last statement substitutes into `A' the `cos' of the
+   elements of `X' at the positions of `A' where the
+   corresponding `sin' is less than `0'.  The end result is
+   that the elements of `A' are a mixture of sines and cosines.
+
+ SEE ALSO
+   array_info, sin, cos
+--------------------------------------------------------------
+
+assoc_delete_key
+
+ SYNOPSIS
+   Delete a key from an Associative Array
+
+ USAGE
+   assoc_delete_key (Assoc_Type a, String_Type k)
+
+ DESCRIPTION
+   The `assoc_delete_key' function deletes a key given by `k'
+   from the associative array `a'.  If the specified key does not
+   exist in `a', then this function has no effect.
+
+ SEE ALSO
+   assoc_key_exists, assoc_get_keys
+--------------------------------------------------------------
+
+assoc_get_keys
+
+ SYNOPSIS
+   Return all the key names of an Associative Array
+
+ USAGE
+   String_Type[] assoc_get_keys (Assoc_Type a)
+
+ DESCRIPTION
+   This function returns all the key names of an associative array
+   `a' as an ordinary one dimensional array of strings.  If the
+   associative array contains no keys, an empty array will be returned.
+
+ EXAMPLE
+   The following function computes the number of keys in an associative
+   array:
+
+         define get_num_elements (a)
+         {
+            return length (assoc_get_keys (a));
+         }
+
+
+ SEE ALSO
+   assoc_get_values, assoc_key_exists, assoc_delete_key, length
+--------------------------------------------------------------
+
+assoc_get_values
+
+ SYNOPSIS
+   Return all the values of an Associative Array
+
+ USAGE
+   Array_Type assoc_get_keys (Assoc_Type a)
+
+ DESCRIPTION
+   This function returns all the values in the associative array
+   `a' as an array of proper type.  If the associative array
+   contains no keys, an empty array will be returned.
+
+ EXAMPLE
+   Suppose that `a' is an associative array of type
+   `Integer_Type', i.e., it was created via
+
+         variable a = Assoc_Type[Integer_Type];
+
+   The the following may be used to print the values of the array in
+   ascending order:
+
+         static define int_sort_fun (x, y)
+         {
+            return sign (x - y);
+         }
+         define sort_and_print_values (a)
+         {
+            variable i, v;
+   	 
+   	 v = assoc_get_values (a);
+   	 i = array_sort (v, &int_sort_fun);
+   	 v = v[i];
+   	 foreach (v)
+   	   {
+   	      variable vi = ();
+   	      () = fprintf (stdout, "%d\n", vi);
+   	   }
+         }
+
+
+ SEE ALSO
+   assoc_get_values, assoc_key_exists, assoc_delete_key, array_sort
+--------------------------------------------------------------
+
+assoc_key_exists
+
+ SYNOPSIS
+   Check to see whether a key exists in an Associative Array
+
+ USAGE
+   Integer_Type assoc_key_exists (Assoc_Type a, String_Type k)
+
+ DESCRIPTION
+   The `assoc_key_exists' function may be used to determine whether
+   or not a specified key `k' exists in an associative array `a'.
+   It returns 1 if the key exists, or 0 if it does not.
+
+ SEE ALSO
+   assoc_get_keys, assoc_get_values, assoc_delete_key
+--------------------------------------------------------------
+
+array_to_bstring
+
+ SYNOPSIS
+   Convert an array to a binary string
+
+ USAGE
+   BString_Type array_to_bstring (Array_Type a)
+
+ DESCRIPTION
+   The `array_to_bstring' function returns the elements of an
+   array `a' as a binary string.
+
+ SEE ALSO
+   bstring_to_array, init_char_array
+--------------------------------------------------------------
+
+bstring_to_array
+
+ SYNOPSIS
+   Convert a binary string to an array of characters
+
+ USAGE
+   UChar_Type[] bstring_to_array (BString_Type b)
+
+ DESCRIPTION
+   The `bstring_to_array' function returns an array of unsigned
+   characters whose elements correspond to the characters in the
+   binary string.
+
+ SEE ALSO
+   array_to_bstring, init_char_array
+--------------------------------------------------------------
+
+bstrlen
+
+ SYNOPSIS
+   Get the length of a binary string
+
+ USAGE
+   UInt_Type bstrlen (BString_Type s)
+
+ DESCRIPTION
+   The `bstrlen' function may be used to obtain the length of a
+   binary string.  A binary string differs from an ordinary string (a C
+   string) in that a binary string may include null chracters.
+
+ EXAMPLE
+
+       variable s = "hello\0";
+       len = bstrlen (s);      % ==> len = 6
+       len = strlen (s);       % ==> len = 5
+
+
+ SEE ALSO
+   strlen, length
+--------------------------------------------------------------
+
+pack
+
+ SYNOPSIS
+   Pack objects into a binary string
+
+ USAGE
+   BString_Type pack (String_Type fmt, ...)
+
+ DESCRIPTION
+   The `pack' function combines zero or more the objects (represented
+   by the ellipses above) into a binary string acording to the format
+   string `fmt'.
+   
+   The format string consists of one or more data-type specification
+   characters, and each may be followed by an optional decimal length
+   specifier. Specifically, the data-types are specified according to
+   the following table:
+
+        c     char
+        C     unsigned char
+        h     short
+        H     unsigned short
+        i     int
+        I     unsigned int
+        l     long
+        L     unsigned long
+        j     16 bit int
+        J     16 unsigned int
+        k     32 bit int
+        K     32 bit unsigned int
+        f     float
+        d     double
+        F     32 bit float
+        D     64 bit float
+        s     character string, null padded
+        S     character string, space padded
+        x     a null pad character
+
+   A decimal length specifier may follow the data-type specifier.  With
+   the exception of the `s' and `S' specifiers, the length
+   specifier indicates how many objects of that data type are to be
+   packed or unpacked from the string.  When used with the `s' or
+   `S' specifiers, it indicates the field width to be used.  If the
+   length specifier is not present, the length defaults to one.
+   
+   With the exception of `c', `C', `s', `S', and
+   `x', each of these may be prefixed by a character that indicates
+   the byte-order of the object:
+
+        >    big-endian order (network order)
+        <    little-endian order
+        =    native byte-order
+
+   The default is to use native byte order.
+   
+   When unpacking via the `unpack' function, if the length
+   specifier is greater than one, then an array of that length will be
+   returned.  In addition, trailing whitespace and null character are
+   stripped when unpacking an object given by the `S' specifier.
+
+ EXAMPLE
+
+        a = pack ("cc", 'A', 'B');         % ==> a = "AB";
+        a = pack ("c2", 'A', 'B');         % ==> a = "AB";
+        a = pack ("xxcxxc", 'A', 'B');     % ==> a = "\0\0A\0\0B";
+        a = pack ("h2", 'A', 'B');         % ==> a = "\0A\0B" or "\0B\0A"
+        a = pack (">h2", 'A', 'B');        % ==> a = "\0\xA\0\xB"
+        a = pack ("<h2", 'A', 'B');        % ==> a = "\0B\0A"
+        a = pack ("s4", "AB", "CD");       % ==> a = "AB\0\0"
+        a = pack ("s4s2", "AB", "CD");     % ==> a = "AB\0\0CD"
+        a = pack ("S4", "AB", "CD");       % ==> a = "AB  "
+        a = pack ("S4S2", "AB", "CD");     % ==> a = "AB  CD"
+
+
+ SEE ALSO
+   unpack, sizeof_pack, pad_pack_format, sprintf
+--------------------------------------------------------------
+
+pad_pack_format
+
+ SYNOPSIS
+   Add padding to a pack format
+
+ USAGE
+   BString_Type pad_pack_format (String_Type fmt)
+
+ DESCRIPTION
+   The `pad_pack_format' function may be used to add the
+   appropriate padding to the format `fmt' such that the data types
+   specified by the format will be properly aligned for the system.
+   This is especially important when reading or writing files that
+   assume the native alignment.
+   
+   See the S-Lang User's Guide for more information about the use of
+   this function.
+
+ SEE ALSO
+   pack, unpack, sizeof_pack
+--------------------------------------------------------------
+
+sizeof_pack
+
+ SYNOPSIS
+   Compute the size implied by a pack format string
+
+ USAGE
+   UInt_Type sizeof_pack (String_Type fmt)
+
+ DESCRIPTION
+   The `sizeof_pack' function returns the size of the binary string
+   represented by the format string `fmt'.  This information may be
+   needed when reading a structure from a file.
+
+ NOTES
+
+ SEE ALSO
+   pack, unpack, pad_pack_format
+--------------------------------------------------------------
+
+unpack
+
+ SYNOPSIS
+   Unpack Objects from a Binary String
+
+ USAGE
+   (...) = unpack (String_Type fmt, BString_Type s)
+
+ DESCRIPTION
+   The `unpack' function unpacks objects from a binary string
+   `s' according to the format `fmt' and returns the objects to
+   the stack in the order in which they were unpacked.  See the
+   documentation of the `pack' function for details about the
+   format string.
+
+ EXAMPLE
+
+       (x,y) = unpack ("cc", "AB");         % ==> x = 'A', y = 'B'
+       x = unpack ("c2", "AB");             % ==> x = ['A', 'B']
+       x = unpack ("x<H", "\0\xAB\xCD");    % ==> x = 0xCDABuh
+       x = unpack ("xxs4", "a b c\0d e f");  % ==> x = "b c\0"
+       x = unpack ("xxS4", "a b c\0d e f");  % ==> x = "b c"
+
+
+ SEE ALSO
+   pack, sizeof_pack, pad_pack_format
+--------------------------------------------------------------
+
+_clear_error
+
+ SYNOPSIS
+   Clear an error condition
+
+ USAGE
+   _clear_error ()
+
+ DESCRIPTION
+   This function may be used in error-blocks to clear the error that
+   triggered execution of the error block.  Execution resumes following
+   the statement, in the scope of the error-block, that triggered the
+   error.
+
+ EXAMPLE
+   Consider the following wrapper around the `putenv' function:
+
+       define try_putenv (name, value)
+       {
+          variable status;
+          ERROR_BLOCK
+           {
+             _clear_error ();
+             status = -1;
+           }
+          status = 0;
+          putenv (sprintf ("%s=%s", name, value);
+          return status;
+       }
+
+   If `putenv' fails, it generates an error condition, which the
+   `try_putenv' function catches and clears.  Thus `try_putenv'
+   is a function that returns `-1' upon failure and `0' upon
+   success.
+
+ SEE ALSO
+   _trace_function, _slangtrace, _traceback
+--------------------------------------------------------------
+
+_debug_info
+
+ SYNOPSIS
+   Configure debugging information
+
+ USAGE
+   Integer_Type _debug_info
+
+ DESCRIPTION
+   The `_debug_info' variable controls whether or not extra code
+   should be generated for additional debugging and traceback
+   information.  Currently, if `_debug_info' is zero, no extra code
+   will be generated; otherwise extra code will be inserted into the
+   compiled bytecode for additional debugging data.
+   
+   The value of this variable is local to each compilation unit and
+   setting its value in one unit has no effect upon its value in other
+   units.
+
+ EXAMPLE
+
+       _debug_info = 1;   % Enable debugging information
+
+
+ NOTES
+   Setting this variable to a non-zero value may slow down the
+   interpreter somewhat.
+
+ SEE ALSO
+   _traceback, _slangtrace
+--------------------------------------------------------------
+
+_slangtrace
+
+ SYNOPSIS
+   Turn function tracing on or off.
+
+ USAGE
+   Integer_Type _slangtrace
+
+ DESCRIPTION
+   The `_slangtrace' variable is a debugging aid that when set to a
+   non-zero value enables tracing when function declared by
+   `_trace_function' is entered.  If the value is greater than
+   zero, both intrinsic and user defined functions will get traced.
+   However, if set to a value less than zero, intrinsic functions will
+   not get traced.
+
+ SEE ALSO
+   _trace_function, _traceback, _print_stack
+--------------------------------------------------------------
+
+_trace_function
+
+ SYNOPSIS
+   Set the function to trace
+
+ USAGE
+   _trace_function (String_Type f)
+
+ DESCRIPTION
+   `_trace_function' declares that the S-Lang function with name
+   `f' is to be traced when it is called.  Calling
+   `_trace_function' does not in itself turn tracing on.  Tracing
+   is turned on only when the variable `_slangtrace' is non-zero.
+
+ SEE ALSO
+   _slangtrace, _traceback
+--------------------------------------------------------------
+
+_traceback
+
+ SYNOPSIS
+   Generate a traceback upon error
+
+ USAGE
+   Integer_Type _traceback
+
+ DESCRIPTION
+   `_traceback' is an intrinsic integer variable whose value
+   controls whether or not a traceback of the call stack is to be
+   generated upon error.  If `_traceback' is greater than zero, a
+   full traceback will be generated, which includes the values of local
+   variables.  If the value is less than zero, a traceback will be
+   generated without local variable information, and if
+   `_traceback' is zero the traceback will not be generated.
+   
+   Local variables are represented in the form `$n' where `n' is an
+   integer numbered from zero.  More explicitly, `$0' represents the
+   first local variable, `$1' represents the second, and so on.
+   Please note that function parameters are local variables and that the
+   first parameter corresponds to `$0'.
+
+ SEE ALSO
+   _slangtrace, error
+--------------------------------------------------------------
+
+chdir
+
+ SYNOPSIS
+   Change the current working directory.
+
+ USAGE
+   Integer_Type chdir (String_Type dir)
+
+ DESCRIPTION
+   The `chdir' function may be used to changed the current working
+   directory to the directory specified by `dir'.  Upon success it
+   returns zero; however, upon failure it returns `-1' and sets
+   `errno' accordingly.
+
+ SEE ALSO
+   mkdir, stat_file
+--------------------------------------------------------------
+
+chmod
+
+ SYNOPSIS
+   Change the mode of a file
+
+ USAGE
+   Integer_Type chmod (String_Type file, Integer_Type mode)
+
+ DESCRIPTION
+   The `chmod' function changes the permissions of `file' to those
+   specified by `mode'.  It returns `0' upon success, or
+   `-1' upon failure setting `errno' accordingly.
+   
+   See the system specific documentation for the C library
+   function `chmod' for a discussion of the `mode' parameter.
+
+ SEE ALSO
+   chown, stat_file
+--------------------------------------------------------------
+
+chown
+
+ SYNOPSIS
+   Change the owner of a file
+
+ USAGE
+   Integer_Type chown (String_Type file, Integer_Type uid, Integer_Type gid)
+
+ DESCRIPTION
+   The `chown' function is used to change the user-id and group-id of
+   `file' to `uid' and `gid', respectively.  It returns
+   `zero' upon success and `-1' upon failure, with `errno'
+   set accordingly.
+
+ NOTES
+   On most systems, only the super user can change the ownership of a
+   file.
+   
+   Some systems do not support this function.
+
+ SEE ALSO
+   chmod, stat_file
+--------------------------------------------------------------
+
+getcwd
+
+ SYNOPSIS
+   Get the current working directory
+
+ USAGE
+   String_Type getcwd ()
+
+ DESCRIPTION
+   The `getcwd' function returns the absolute pathname of the
+   current working directory.  If an error occurs or it cannot
+   determine the working directory, it returns `NULL' and sets
+   `errno' accordingly.
+
+ NOTES
+   Under Unix, OS/2, and MSDOS, the pathname returned by this function
+   includes the trailing slash character.  Some versions also include
+   the drive specifier.
+
+ SEE ALSO
+   mkdir, chdir, errno
+--------------------------------------------------------------
+
+listdir
+
+ SYNOPSIS
+   Get a list of the files in a directory
+
+ USAGE
+   String_Type[] listdir (String_Type dir)
+
+ DESCRIPTION
+   The `listdir' function returns the directory listing of all the
+   files in the specified directory `dir' as an array of strings.
+   It does not return the special files `".."' and `"."' as
+   part of the list.
+
+ SEE ALSO
+   stat_file, stat_is, length
+--------------------------------------------------------------
+
+lstat_file
+
+ SYNOPSIS
+   Get information about a symbolic link
+
+ USAGE
+   Struct_Type lstat_file (String_Type file)
+
+ DESCRIPTION
+   The `lstat_file' function behaves identically to `stat_file'
+   but if `file' is a symbolic link, `lstat_file' returns
+   information about the link itself, and not the file that it
+   references.
+   
+   See the documentation for `stat_file' for more information.
+
+ NOTES
+   On systems that do not support symbolic links, there is no
+   difference between this function and the `stat_file' function.
+
+ SEE ALSO
+   stat_file, readlink
+--------------------------------------------------------------
+
+mkdir
+
+ SYNOPSIS
+   Create a new directory
+
+ USAGE
+   Integer_Type mkdir (String_Type dir, Integer_Type mode)
+
+ DESCRIPTION
+   The `mkdir' function creates a directory whose name is specified
+   by the `dir' parameter with permissions specified by `mode'.
+   Upon success `mkdir' returns zero, or it returns `-1' and
+   sets `errno' accordingly.  In particular, if the directory
+   already exists, the function will fail and set errno to
+   `EEXIST'.
+
+ EXAMPLE
+
+        define my_mkdir (dir)
+        {
+           if (0 == mkdir (dir, 0777)) return;
+           if (errno == EEXIST) return;
+           verror ("mkdir %s failed: %s", dir, errno_string (errno));
+        }
+
+
+ NOTES
+   The `mode' parameter may not be meaningful on all systems.  On
+   systems where it is meaningful, the actual permissions on the newly
+   created directory are modified by the process's umask.
+
+ SEE ALSO
+   rmdir, getcwd, chdir, fopen, errno
+--------------------------------------------------------------
+
+readlink
+
+ SYNOPSIS
+   String_Type readlink (String_Type path)
+
+ USAGE
+   Get the value of a symbolic link
+
+ DESCRIPTION
+   The `readlink' function returns the value of a symbolic link and
+   returns it as a string.  Upon failure, NULL is returned and
+   `errno' set accordingly.
+
+ NOTES
+   Not all systems support this function.
+
+ SEE ALSO
+   lstat_file, stat_file, stat_is
+--------------------------------------------------------------
+
+remove
+
+ SYNOPSIS
+   Delete a file
+
+ USAGE
+   Integer_Type remove (String_Type file)
+
+ DESCRIPTION
+   The `remove' function deletes a file.  It returns 0 upon
+   success, or -1 upon error and sets `errno' accordingly.
+
+ SEE ALSO
+   rename, rmdir
+--------------------------------------------------------------
+
+rename
+
+ SYNOPSIS
+   Rename a file
+
+ USAGE
+   Integer_Type rename (String_Type old, String_Type new)
+
+ DESCRIPTION
+   The `rename' function renames a file from `old' to `new'
+   moving it between directories if necessary.  This function may fail
+   if the directories do not refer to the same file system.  It returns
+   0 upon success, or -1 upon error and sets `errno' accordingly.
+
+ SEE ALSO
+   remove, errno
+--------------------------------------------------------------
+
+rmdir
+
+ SYNOPSIS
+   Remove a directory
+
+ USAGE
+   Integer_Type rmdir (String_Type dir)
+
+ DESCRIPTION
+   The `rmdir' function deletes a specified directory.  It returns
+   0 upon success or -1 upon error and sets `errno' accordingly.
+
+ NOTES
+   The directory must be empty before it can be removed.
+
+ SEE ALSO
+   rename, remove, mkdir
+--------------------------------------------------------------
+
+stat_file
+
+ SYNOPSIS
+   Get information about a file
+
+ USAGE
+   Struct_Type stat_file (String_Type file)
+
+ DESCRIPTION
+   The `stat_file' function returns information about `file'
+   through the use of the system `stat' call.  If the stat call
+   fails, the function returns `NULL' and sets errno accordingly.
+   If it is successful, it returns a stat structure with the following
+   integer fields:
+
+       st_dev
+       st_ino
+       st_mode
+       st_nlink
+       st_uid
+       st_gid
+       st_rdev
+       st_size
+       st_atime
+       st_mtime
+       st_ctime
+
+   See the man page for `stat' for a discussion of these fields.
+
+ EXAMPLE
+   The following example shows how the `stat_file' function may be
+   used to get the size of a file:
+
+        define file_size (file)
+        {
+           variable st;
+           st = stat_file(file);
+           if (st == NULL) verror ("Unable to stat %s", file);
+           return st.st_size;
+        }
+
+
+ SEE ALSO
+   lstat_file, stat_is
+--------------------------------------------------------------
+
+stat_is
+
+ SYNOPSIS
+   Parse the var{st_mode
+
+ USAGE
+   Char_Type stat_is (String_Type type, Integer_Type st_mode)
+
+ DESCRIPTION
+   The `stat_is' function returns a signed character value about
+   the type of file specified by `st_mode'.  Specifically,
+   `type' must be one of the strings:
+
+        "sock"     (socket)
+        "fifo"     (fifo)
+        "blk"      (block device)
+        "chr"      (character device)
+        "reg"      (regular file)
+        "lnk"      (link)
+        "dir"      (dir)
+
+   It returns a non-zero value if `st_mode' corresponds to
+   `type'.
+
+ EXAMPLE
+   The following example illustrates how to use the `stat_is'
+   function to determine whether or not a file is a directory:
+
+        define is_directory (file)
+        {
+           variable st;
+   
+           st = stat_file (file);
+           if (st == NULL) return 0;
+           return stat_is ("dir", st.st_mode);
+        }
+
+
+ SEE ALSO
+   stat_file, lstat_file
+--------------------------------------------------------------
+
+autoload
+
+ SYNOPSIS
+   Load a function from a file
+
+ USAGE
+   autoload (String_Type funct, String_Type file)
+
+ DESCRIPTION
+    The `autoload' function is used to declare `funct' to the
+    interpreter and indicate that it should be loaded from `file' when
+    it is actually used.
+
+ EXAMPLE
+    Suppose `bessel_j0' is a function defined in the file
+    `bessel.sl'.  Then the statement
+
+         autoload ("bessel_j0", "bessel.sl");
+
+    will cause `bessel.sl' to be loaded prior to the execution of
+    `bessel_j0'
+
+ SEE ALSO
+   evalfile
+--------------------------------------------------------------
+
+byte_compile_file
+
+ SYNOPSIS
+   Compile a file to byte-code for faster loading.
+
+ USAGE
+   byte_compile_file (String_Type file, Integer_Type method)
+
+ DESCRIPTION
+   The `byte_compile_file' function byte-compiles `file'
+   producing a new file with the same name except a `'c'' is added
+   to the output file name.  For example, `file' is
+   `"site.sl"', then the function produces a new file named
+   `site.slc'.
+
+ NOTES
+   The `method' parameter is not used in the current
+   implementation.  Its use is reserved for the future.  For now, set
+   it to `0'.
+
+ SEE ALSO
+   evalfile
+--------------------------------------------------------------
+
+eval
+
+ SYNOPSIS
+   Interpret a string as slang code
+
+ USAGE
+   eval (String_Type expression, [,String_Type namespace])
+
+ DESCRIPTION
+   The `eval' function parses a string as S-Lang code and executes the
+   result.  If called with the optional namespace argument, then the
+   string will be evaluated in the specified namespace.
+   
+   This is a useful function in many contexts such as dynamically
+   generating function definitions where there is no way to generate
+   them otherwise.
+
+ EXAMPLE
+
+       if (0 == is_defined ("my_function"))
+         eval ("define my_function () { message (\"my_function\"); }");
+
+
+ SEE ALSO
+   is_defined, autoload, evalfile
+--------------------------------------------------------------
+
+evalfile
+
+ SYNOPSIS
+   Interpret a file containing slang code.
+
+ USAGE
+   Integer_Type evalfile (String_Type file, [,String_Type namespace])
+
+ DESCRIPTION
+   The `evalfile' function loads `file' into the interpreter
+   and executes it.  If called with the optional namespace argument,
+   the file will be loaded into the specified namespace, which will be
+   created if necessary.  If no errors were encountered, `1' will
+   be returned; otherwise, a S-Lang error will be generated and the
+   function will return zero.
+
+ EXAMPLE
+
+       define load_file (file)
+       {
+          ERROR_BLOCK { _clear_error (); }
+          () = evalfile (file);
+       }
+
+
+ NOTES
+   For historical reasons, the return value of this function is not
+   really useful.
+   
+   The file is searched along an application-defined load-path.  The
+   `get_slang_load_path' and `set_slang_load_path' functions
+   may be used to set and query the path.
+
+ SEE ALSO
+   eval, autoload, set_slang_load_path, get_slang_load_path
+--------------------------------------------------------------
+
+get_slang_load_path
+
+ SYNOPSIS
+   Get the value of the interpreter's load-path
+
+ USAGE
+   String_Type get_slang_load_path ()
+
+ DESCRIPTION
+   This function retrieves the value of the delimiter-separated search
+   path used for loading files.
+
+ NOTES
+   Some applications may not support the built-in load-path searching
+   facility provided by the underlying library.
+
+ SEE ALSO
+   
+--------------------------------------------------------------
+
+set_slang_load_path
+
+ SYNOPSIS
+   Set the value of the interpreter's load-path
+
+ USAGE
+   set_slang_load_path (String_Type path)
+
+ DESCRIPTION
+   This function may be used to set the value of the
+   delimiter-separated search path used by the `evalfile' and
+   `autoload' functions for locating files.
+
+ EXAMPLE
+
+       public define prepend_to_slang_load_path (p)
+       {
+          variable s = stat_file (p);
+          if (s == NULL) return;
+          if (0 == stat_is ("dir", s.st_mode))
+            return;
+   
+          variable d = path_get_delimiter ();
+          set_slang_load_path (strcat (p, d, get_slang_load_path ()));
+       }
+
+
+ NOTES
+   Some applications may not support the built-in load-path searching
+   facility provided by the underlying library.
+
+ SEE ALSO
+   get_slang_load_path, path_get_delimiter, evalfile, autoload
+--------------------------------------------------------------
+
+get_import_module_path
+
+ SYNOPSIS
+   Get the search path for dynamically loadable objects
+
+ USAGE
+   String_Type get_import_module_path ()
+
+ DESCRIPTION
+   The `get_import_module_path' may be used to get the search path
+   for dynamically shared objects.  Such objects may be made accessable
+   to the application via the `import' function.
+
+ SEE ALSO
+   import, set_import_module_path
+--------------------------------------------------------------
+
+import
+
+ SYNOPSIS
+   Dynamically link to a specified module
+
+ USAGE
+   import (String_Type module [, String_Type namespace])
+
+ DESCRIPTION
+   The `import' function causes the run-time linker to dynamically
+   link to the shared object specified by the `module' parameter.
+   It seaches for the shared object as follows: First a search is
+   performed along all module paths specified by the application.  Then
+   a search is made along the paths defined via the
+   `set_import_module_path' function.  If not found, a search is
+   performed along the paths given by the `SLANG_MODULE_PATH'
+   environment variable.  Finally, a system dependent search is
+   performed (e.g., using the `LD_LIBRARY_PATH' environment
+   variable).
+   
+   The optional second parameter may be used to specify a namespace
+   for the intrinsic functions and variables of the module.  If this
+   parameter is not present, the intrinsic objects will be placed into
+   the global namespace.
+   
+   This function signals an error if the specified module is not found.
+
+ NOTES
+   The `import' function is not available on all systems.
+
+ SEE ALSO
+   set_import_module_path, use_namespace, current_namespace, getenv, evalfile
+--------------------------------------------------------------
+
+set_import_module_path
+
+ SYNOPSIS
+   Set the search path for dynamically loadable objects
+
+ USAGE
+   set_import_module_path (String_Type path_list)
+
+ DESCRIPTION
+   The `set_import_module_path' may be used to set the search path
+   for dynamically shared objects.  Such objects may be made accessable
+   to the application via the `import' function.
+   
+   The actual syntax for the specification of the set of paths will
+   vary according to the operating system.  Under Unix, a colon
+   character is used to separate paths in `path_list'.  For win32
+   systems a semi-colon is used.
+
+ SEE ALSO
+   import, get_import_module_path
+--------------------------------------------------------------
+
+_NARGS
+
+ SYNOPSIS
+   The number of parameters passed to a function
+
+ USAGE
+   Integer_Type _NARGS
+
+ EXAMPLE
+   This example uses the `_NARGS' variable to print the list of
+   values passed to the function:
+
+        define print_values ()
+        {
+           variable arg;
+           
+           if (_NARGS == 0)
+             {
+                message ("Nothing to print");
+                return;
+             }
+           foreach (__pop_args (_NARGS))
+             {
+                arg = ();
+                vmessage ("Argument value is: %S", arg.value);
+             }
+        }
+
+
+ SEE ALSO
+   __pop_args, __push_args, typeof
+--------------------------------------------------------------
+
+__get_defined_symbols
+
+ SYNOPSIS
+   Get the symbols defined by the preprocessor
+
+ USAGE
+   Integer_Type __get_defined_symbols ()
+
+ DESCRIPTION
+   The `__get_defined_symbols' functions is used to get the list of
+   all the symbols defined by the S-Lang preprocessor.  It pushes each
+   of the symbols on the stack followed by the number of items pushed.
+
+ SEE ALSO
+   is_defined, _apropos, _get_namespaces
+--------------------------------------------------------------
+
+__is_initialized
+
+ SYNOPSIS
+   Determine whether or not a variable has a value
+
+ USAGE
+   Integer_Type __is_initialized (Ref_Type r)
+
+ DESCRIPTION
+   This function returns non-zero of the object referenced by `r'
+   is initialized, i.e., whether it has a value.  It returns 0 if the
+   referenced object has not been initialized.
+
+ EXAMPLE
+   For example, the function:
+
+       define zero ()
+       {
+          variable f;
+          return __is_initialized (&f);
+       }
+
+   will always return zero, but
+
+       define one ()
+       {
+          variable f = 0;
+          return __is_initialized (&f);
+       }
+
+   will return one.
+
+ NOTES
+   It is easy to see why a reference to the variable must be passed to
+   `__is_initialized' and not the variable itself; otherwise, the
+   value of the variable would be passed and the variable may have no
+   value if it was not initialized.
+
+ SEE ALSO
+   __get_reference, __uninitialize, is_defined, typeof, eval
+--------------------------------------------------------------
+
+_apropos
+
+ SYNOPSIS
+   Generate a list of functions and variables
+
+ USAGE
+   Array_Type _apropos (String_Type ns, String_Type s, Integer_Type flags)
+
+ DESCRIPTION
+   The `_apropos' function may be used to get a list of all defined
+   objects in the namespace `ns' whose name matches the regular
+   expression `s' and whose type matches those specified by
+   `flags'.  It returns an array of strings representing the
+   matches. 
+   
+   The second parameter `flags' is a bit mapped value whose bits
+   are defined according to the following table
+
+        1          Intrinsic Function
+        2          User-defined Function
+        4          Intrinsic Variable
+        8          User-defined Variable
+
+
+ EXAMPLE
+
+       define apropos (s)
+       {
+         variable n, name, a;
+         a = _apropos ("Global", s, 0xF);
+         
+         vmessage ("Found %d matches:", length (a));
+         foreach (a)
+           {
+              name = ();
+              message (name);
+           }
+       }
+
+   prints a list of all matches.
+
+ NOTES
+   If the namespace specifier `ns' is the empty string `""',
+   then the namespace will default to the static namespace of the
+   current compilation unit.
+
+ SEE ALSO
+   is_defined, sprintf, _get_namespaces
+--------------------------------------------------------------
+
+_function_name
+
+ SYNOPSIS
+   Returns the name of the currently executing function
+
+ USAGE
+   String_Type _function_name ()
+
+ DESCRIPTION
+   This function returns the name of the currently executing function.
+   If called from top-level, it returns the empty string.
+
+ SEE ALSO
+   _trace_function, is_defined
+--------------------------------------------------------------
+
+_get_namespaces
+
+ SYNOPSIS
+   Returns a list of namespace names
+
+ USAGE
+   String_Type[] _get_namespaces ()
+
+ DESCRIPTION
+   This function returns a string array containing the names of the
+   currently defined namespaces.
+
+ SEE ALSO
+   _apropos, use_namespace, implements, __get_defined_symbols
+--------------------------------------------------------------
+
+_slang_doc_dir
+
+ SYNOPSIS
+   Installed documentation directory
+
+ USAGE
+   String_Type _slang_doc_dir;
+
+ DESCRIPTION
+   The `_slang_doc_dir' variable is a read-only whose value
+   specifies the installation location of the S-Lang documentation.
+
+ SEE ALSO
+   get_doc_string_from_file
+--------------------------------------------------------------
+
+_slang_version
+
+ SYNOPSIS
+   The S-Lang library version number
+
+ USAGE
+   Integer_Type _slang_version
+
+ DESCRIPTION
+   The `_slang_version' variable is read-only and whose
+   value represents the number of the S-Lang library.
+
+ SEE ALSO
+   _slang_version_string
+--------------------------------------------------------------
+
+_slang_version_string
+
+ SYNOPSIS
+   The S-Lang library version number as a string
+
+ USAGE
+   String_Type _slang_version_string
+
+ DESCRIPTION
+   The `_slang_version_string' variable is read-only and whose
+   value represents the version number of the S-Lang library.
+
+ SEE ALSO
+   _slang_version
+--------------------------------------------------------------
+
+get_doc_string_from_file
+
+ SYNOPSIS
+   Read documentation from a file
+
+ USAGE
+   String_Type get_doc_string_from_file (String_Type f, String_Type t)
+
+ DESCRIPTION
+   `get_doc_string_from_file' opens the documentation file `f'
+   and searches it for topic `t'.  It returns the documentation for
+   `t' upon success, otherwise it returns `NULL' upon error.
+   It will fail if `f' could not be opened or does not contain
+   documentation for the topic.
+
+ SEE ALSO
+   stat_file
+
+ SEE ALSO
+   _slang_doc_dir
+--------------------------------------------------------------
+
+is_defined
+
+ SYNOPSIS
+   Indicate whether a variable or function defined.
+
+ USAGE
+   Integer_Type is_defined (String_Type obj)
+
+ DESCRIPTION
+   This function is used to determine whether or not a function or
+   variable whose name is `obj' has been defined.  If `obj' is not
+   defined, the function returns 0.  Otherwise, it returns a non-zero
+   value that defpends on the type of object `obj' represents.
+   Specifically, it returns one of the following values:
+
+        +1 if an intrinsic function
+        +2 if user defined function
+        -1 if intrinsic variable
+        -2 if user defined variable
+         0 if undefined
+
+
+ EXAMPLE
+    For example, consider the function:
+
+       define runhooks (hook)
+       {
+          if (2 == is_defined(hook)) eval(hook);
+       }
+
+    This function could be called from another S-Lang function to
+    allow customization of that function, e.g., if the function
+    represents a mode, the hook could be called to setup keybindings
+    for the mode.
+
+ SEE ALSO
+   typeof, eval, autoload, __get_reference, __is_initialized
+--------------------------------------------------------------
+
+Conj
+
+ SYNOPSIS
+   Compute the complex conjugate of a number
+
+ USAGE
+   z1 = Conj (z)
+
+ DESCRIPTION
+   The `Conj' function returns the complex conjugate of a number.
+   If its argument is an array, the `Conj' function will be applied to each
+   element and the result returned as an array.
+
+ SEE ALSO
+   Real, Imag, abs
+--------------------------------------------------------------
+
+Imag
+
+ SYNOPSIS
+   Compute the imaginary part of a number
+
+ USAGE
+   i = Imag (z)
+
+ DESCRIPTION
+   The `Imag' function returns the imaginary part of a number.
+   If its argument is an array, the `Imag' function will be applied to each
+   element and the result returned as an array.
+
+ SEE ALSO
+   Real, Conj, abs
+--------------------------------------------------------------
+
+Real
+
+ SYNOPSIS
+   Compute the real part of a number
+
+ USAGE
+   r = Real (z)
+
+ DESCRIPTION
+   The `Real' function returns the real part of a number. If its
+   argument is an array, the `Real' function will be applied to
+   each element and the result returned as an array.
+
+ SEE ALSO
+   Imag, Conj, abs
+--------------------------------------------------------------
+
+abs
+
+ SYNOPSIS
+   Compute the absolute value of a number
+
+ USAGE
+   y = abs(x)
+
+ DESCRIPTION
+   The `abs' function returns the absolute value of an arithmetic
+   type.  If its argument is a complex number (`Complex_Type'),
+   then it returns the modulus.  If the argument is an array, a new
+   array will be created whose elements are obtained from the original
+   array by using the `abs' function.
+
+ SEE ALSO
+   sign, sqr
+--------------------------------------------------------------
+
+acos
+
+ SYNOPSIS
+   Compute the arc-cosine of an number
+
+ USAGE
+   y = acos (x)
+
+ DESCRIPTION
+   The `acos' function computes the arc-cosine of a number and
+   returns the result as an array.  If its argument is an array, the
+   `acos' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+acosh
+
+ SYNOPSIS
+   Compute the inverse cosh of an number
+
+ USAGE
+   y = acosh (x)
+
+ DESCRIPTION
+   The `acosh' function computes the inverse cosh of a number and
+   returns the result as an array.  If its argument is an array, the
+   `acosh' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+asin
+
+ SYNOPSIS
+   Compute the arc-sine of an number
+
+ USAGE
+   y = asin (x)
+
+ DESCRIPTION
+   The `asin' function computes the arc-sine of a number and
+   returns the result as an array.  If its argument is an array, the
+   `asin' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+asinh
+
+ SYNOPSIS
+   Compute the inverse-sinh of an number
+
+ USAGE
+   y = asinh (x)
+
+ DESCRIPTION
+   The `asinh' function computes the inverse-sinh of a number and
+   returns the result as an array.  If its argument is an array, the
+   `asinh' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+atan
+
+ SYNOPSIS
+   Compute the arc-tangent of an number
+
+ USAGE
+   y = atan (x)
+
+ DESCRIPTION
+   The `atan' function computes the arc-tangent of a number and
+   returns the result as an array.  If its argument is an array, the
+   `atan' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+atanh
+
+ SYNOPSIS
+   Compute the inverse-tanh of an number
+
+ USAGE
+   y = atanh (x)
+
+ DESCRIPTION
+   The `atanh' function computes the inverse-tanh of a number and
+   returns the result as an array.  If its argument is an array, the
+   `atanh' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+cos
+
+ SYNOPSIS
+   Compute the cosine of an number
+
+ USAGE
+   y = cos (x)
+
+ DESCRIPTION
+   The `cos' function computes the cosine of a number and
+   returns the result as an array.  If its argument is an array, the
+   `cos' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+cosh
+
+ SYNOPSIS
+   Compute the hyperbolic cosine of an number
+
+ USAGE
+   y = cosh (x)
+
+ DESCRIPTION
+   The `cosh' function computes the hyperbolic cosine of a number and
+   returns the result as an array.  If its argument is an array, the
+   `cosh' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+exp
+
+ SYNOPSIS
+   Compute the exponential of an number
+
+ USAGE
+   y = exp (x)
+
+ DESCRIPTION
+   The `exp' function computes the exponential of a number and
+   returns the result as an array.  If its argument is an array, the
+   `exp' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+log
+
+ SYNOPSIS
+   Compute the logarithm of an number
+
+ USAGE
+   y = log (x)
+
+ DESCRIPTION
+   The `log' function computes the logarithm of a number and
+   returns the result as an array.  If its argument is an array, the
+   `log' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+log10
+
+ SYNOPSIS
+   Compute the base-10 logarithm of an number
+
+ USAGE
+   y = log10 (x)
+
+ DESCRIPTION
+   The `log10' function computes the base-10 logarithm of a number and
+   returns the result as an array.  If its argument is an array, the
+   `log10' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+mul2
+
+ SYNOPSIS
+   Multiply a number by 2
+
+ USAGE
+   y = mul2(x)
+
+ DESCRIPTION
+   The `mul2' function multiplies an arithmetic type by two and
+   returns the result.  If its argument is an array, a new array will
+   be created whose elements are obtained from the original array by
+   using the `mul2' function.
+
+ SEE ALSO
+   sqr, abs
+--------------------------------------------------------------
+
+polynom
+
+ SYNOPSIS
+   Evaluate a polynomial
+
+ USAGE
+   Double_Type polynom(Double_Type a, b, ...c, Integer_Type n, Double_Type x)
+
+ DESCRIPTION
+   The `polynom' function returns the value of the polynomial expression:
+
+        ax^n + bx^(n - 1) + ... c
+
+
+ NOTES
+   The `polynom' function should be extended to work with complex
+   and array data types.  The current implementation is limited to
+   `Double_Type' quantities.
+
+ SEE ALSO
+   exp
+--------------------------------------------------------------
+
+set_float_format
+
+ SYNOPSIS
+   Set the format for printing floating point values.
+
+ USAGE
+   set_float_format (String_Type fmt)
+
+ DESCRIPTION
+   The `set_float_format' function is used to set the floating
+   point format to be used when floating point numbers are printed.
+   The routines that use this are the traceback routines and the
+   `string' function. The default value is `"%f"'
+
+ EXAMPLE
+
+        s = string (PI);                %  --> s = "3.14159"
+        set_float_format ("%16.10f");
+        s = string (PI);                %  --> s = "3.1415926536"
+        set_float_format ("%10.6e");
+        s = string (PI);                %  --> s = "3.141593e+00"
+
+
+ SEE ALSO
+   string, sprintf, double
+--------------------------------------------------------------
+
+sign
+
+ SYNOPSIS
+   Compute the sign of a number
+
+ USAGE
+   y = sign(x)
+
+ DESCRIPTION
+   The `sign' function returns the sign of an arithmetic type.  If
+   its argument is a complex number (`Complex_Type'), it returns
+   the sign of the imaginary part of the number. If the argument is an
+   array, a new array will be created whose elements are obtained from
+   the original array by using the `sign' function.
+   
+   When applied to a real number or an integer, the `sign' function
+   returns -1, 0, or `+1' according to whether the number is
+   less than zero, equal to zero, or greater than zero, respectively.
+
+ SEE ALSO
+   abs
+--------------------------------------------------------------
+
+sin
+
+ SYNOPSIS
+   Compute the sine of an number
+
+ USAGE
+   y = sin (x)
+
+ DESCRIPTION
+   The `sin' function computes the sine of a number and
+   returns the result as an array.  If its argument is an array, the
+   `sin' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+sinh
+
+ SYNOPSIS
+   Compute the hyperbolic sine of an number
+
+ USAGE
+   y = sinh (x)
+
+ DESCRIPTION
+   The `sinh' function computes the hyperbolic sine of a number and
+   returns the result as an array.  If its argument is an array, the
+   `sinh' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+sqr
+
+ SYNOPSIS
+   Compute the square of a number
+
+ USAGE
+   y = sqr(x)
+
+ DESCRIPTION
+   The `sqr' function returns the square of an arithmetic type.  If its
+   argument is a complex number (`Complex_Type'), then it returns
+   the square of the modulus.  If the argument is an array, a new array
+   will be created whose elements are obtained from the original array
+   by using the `sqr' function.
+
+ SEE ALSO
+   abs, mul2
+--------------------------------------------------------------
+
+sqrt
+
+ SYNOPSIS
+   Compute the square root of an number
+
+ USAGE
+   y = sqrt (x)
+
+ DESCRIPTION
+   The `sqrt' function computes the square root of a number and
+   returns the result as an array.  If its argument is an array, the
+   `sqrt' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   sqr, cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+tan
+
+ SYNOPSIS
+   Compute the tangent of an number
+
+ USAGE
+   y = tan (x)
+
+ DESCRIPTION
+   The `tan' function computes the tangent of a number and
+   returns the result as an array.  If its argument is an array, the
+   `tan' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+tanh
+
+ SYNOPSIS
+   Compute the hyperbolic tangent of an number
+
+ USAGE
+   y = tanh (x)
+
+ DESCRIPTION
+   The `tanh' function computes the hyperbolic tangent of a number and
+   returns the result as an array.  If its argument is an array, the
+   `tanh' function will be applied to each element and the result returned
+   as an array.
+
+ SEE ALSO
+   cos, atan, acosh, cosh
+--------------------------------------------------------------
+
+error
+
+ SYNOPSIS
+   Generate an error condition
+
+ USAGE
+   error (String_Type msg
+
+ DESCRIPTION
+   The `error' function generates a S-Lang error condition causing
+   the interpreter to start unwinding to top-level.  It takes a single
+   string parameter which is displayed on the stderr output device.
+   The error condition may be cleared via an `ERROR_BLOCK' with the
+   `_clear_error' function.  Consult \user-manual for more
+   information.
+
+ EXAMPLE
+
+       define add_txt_extension (file)
+       {
+          if (typeof (file) != String_Type)
+            error ("add_extension: parameter must be a string");
+          file += ".txt";
+          return file;
+       }
+
+
+ SEE ALSO
+   verror, _clear_error, message
+--------------------------------------------------------------
+
+message
+
+ SYNOPSIS
+   Print a string onto the message device
+
+ USAGE
+   message (String_Type s
+
+ DESCRIPTION
+   The `message' function will print the string specified by
+   `s' onto the message device.
+
+ EXAMPLE
+
+        define print_current_time ()
+        {
+          message (time ());
+        }
+
+
+ NOTES
+   The message device will depend upon the application.  For example,
+   the output message device for the `jed' editor correspond to the
+   line at the bottom of the display window.  The default message
+   device is the standard output device.
+
+ SEE ALSO
+   vmessage, sprintf, error
+--------------------------------------------------------------
+
+usage
+
+ SYNOPSIS
+   Generate a usage error
+
+ USAGE
+   usage (String_Type msg)
+
+ DESCRIPTION
+   The `usage' function generates a usage exception and displays
+   `msg' to the message device.
+
+ EXAMPLE
+   Suppose that some function `plot' plots an array of `x' and
+   `y' values.  The such a function could be written to issue a
+   usage message if the wrong number of arguments were passed:
+
+       define plot ()
+       { 
+          variable x, y;
+   
+          if (_NARGS != 2)
+            usage ("plot (x, y)");
+          
+          (x, y) = ();
+          % Now do the hard part
+             .
+   	  .
+       }
+
+
+ SEE ALSO
+   error, message
+--------------------------------------------------------------
+
+verror
+
+ SYNOPSIS
+   Generate an error condition
+
+ USAGE
+   verror (String_Type fmt, ...)
+
+ DESCRIPTION
+   The `verror' function performs the same role as the `error'
+   function.  The only difference is that instead of a single string
+   argument, `verror' takes a sprintf style argument list.
+
+ EXAMPLE
+
+       define open_file (file)
+       {
+          variable fp;
+   
+          fp = fopen (file, "r");
+          if (fp == NULL) verror ("Unable to open %s", file);
+          return fp;
+       }
+
+
+ NOTES
+   In the current implementation, strictly speaking, the `verror'
+   function is not an intrinsic function.  Rather it is a predefined
+   S-Lang function using a combination of `Sprintf' and
+   `error'.
+
+ SEE ALSO
+   error, Sprintf, vmessage
+--------------------------------------------------------------
+
+vmessage
+
+ SYNOPSIS
+   Print a formatted string onto the message device
+
+ USAGE
+   vmessage (String_Type fmt, ...)
+
+ DESCRIPTION
+   The `vmessage' function formats a sprintf style argument list
+   and displays the resulting string onto the message device.
+
+ NOTES
+   In the current implementation, strictly speaking, the `vmessage'
+   function is not an intrinsic function.  Rather it is a predefined
+   S-Lang function using a combination of `Sprintf' and
+   `message'.
+
+ SEE ALSO
+   message, Sprintf, verror
+--------------------------------------------------------------
+
+__class_id
+
+ SYNOPSIS
+   Return the class-id of a specified type
+
+ USAGE
+   Int_Type __class_id (DataType_Type type))
+
+ DESCRIPTION
+   This function returns the internal class-id of a specified data type.
+
+ SEE ALSO
+   typeof, _typeof, __class_type
+--------------------------------------------------------------
+
+__class_type
+
+ SYNOPSIS
+   Return the class-type of a specified type
+
+ USAGE
+   Int_Type __class_type (DataType_Type type))
+
+ DESCRIPTION
+   Internally S-Lang objects are classified according to four types:
+   scalar, vector, pointer, and memory managed types.  For example, an
+   integer is implemented as a scalar, a complex number as a vector,
+   and a string is represented as a pointer.  The `__class_type'
+   function returns an integer representing the class-type associated
+   with the specified data type. Specifically, it returns:
+
+          0    memory-managed
+          1    scalar
+          2    vector
+          3    pointer
+
+
+ SEE ALSO
+   typeof, _typeof, __class_id
+--------------------------------------------------------------
+
+__eqs
+
+ SYNOPSIS
+   Test for equality between two objects
+
+ USAGE
+   Int_Type __eqs (a, b)
+
+ DESCRIPTION
+   This function tests its two arguments for equalit and returns 1
+   if they are equal, and 0 otherwise.  To be equal, the data type of
+   the arguments must match and the values of the objects must
+   reference the same underlying object.
+
+ EXAMPLE
+   __eqs (1, 1)         ===> 1
+   __eqs (1, 1.0)       ===> 0
+   __eqs ("a", 1)       ===> 0
+   __eqs ([1,2], [1,2]) ===> 0
+
+ SEE ALSO
+   typeof, __get_reference
+
+ NOTES
+   This function should be thought of as a test for "sameness".
+--------------------------------------------------------------
+
+__get_reference
+
+ SYNOPSIS
+   Get a reference to a global object
+
+ USAGE
+   Ref_Type __get_reference (String_Type nm)
+
+ DESCRIPTION
+   This function returns a reference to a global variable or function
+   whose name is specified by `nm'.  If no such object exists, it
+   returns `NULL', otherwise it returns a reference.
+
+ EXAMPLE
+   For example, consider the function:
+
+       define runhooks (hook)
+       {
+          variable f;
+          f = __get_reference (hook);
+          if (f != NULL)
+            @f ();
+       }
+
+   This function could be called from another S-Lang function to
+   allow customization of that function, e.g., if the function
+   represents a mode, the hook could be called to setup keybindings
+   for the mode.
+
+ SEE ALSO
+   is_defined, typeof, eval, autoload, __is_initialized, __uninitialize
+--------------------------------------------------------------
+
+__uninitialize
+
+ SYNOPSIS
+   Uninitialize a variable
+
+ USAGE
+   __uninitialize (Ref_Type x)
+
+ DESCRIPTION
+   The `__uninitialize' function may be used to uninitialize the
+   variable referenced by the parameter `x'.
+
+ EXAMPLE
+   The following two lines are equivalent:
+
+        () = __tmp(z);
+        __uninitialize (&z);
+
+
+ SEE ALSO
+   __tmp, __is_initialized
+--------------------------------------------------------------
+
+_auto_declare
+
+ SYNOPSIS
+   Set automatic variable declaration mode
+
+ USAGE
+   Integer_Type _auto_declare
+
+ DESCRIPTION
+   The `_auto_declare' may be used to have all undefined variables
+   implicitely declared as `static'.  If set to zero, any variable
+   must be declared witha `variable' declaration before it can be
+   used.  If set to one, then any undeclared variabled will be declared
+   as a `static' global variable.
+   
+   The `_auto_declare' variable is local to each compilation unit and
+   setting its value in one unit has no effect upon its value in other
+   units.   The value of this variable has no effect upon the variables
+   in a function.
+
+ EXAMPLE
+   The following code will not compile if `X' not been
+   declared:
+
+       X = 1;
+
+   However, 
+
+       _auto_declare = 1;   % declare variables as static.
+       X = 1;
+
+   is equivalent to 
+
+       static variable X = 1;
+
+
+ NOTES
+   This variable should be used sparingly and is intended primarily for
+   interactive applications where one types S-Lang commands at a prompt.
+--------------------------------------------------------------
+
+current_namespace
+
+ SYNOPSIS
+   Get the name of the current namespace
+
+ USAGE
+   String_Type current_namespace ()
+
+ DESCRIPTION
+   The `current_namespace' function returns the name of the
+   current namespace.  If the current namespace is anonymous, that is,
+   has not been given a name via the `implements' function, the
+   empty string `""' will be returned.
+
+ SEE ALSO
+   implements, use_namespace, import
+--------------------------------------------------------------
+
+getenv
+
+ SYNOPSIS
+   Get the value of an environment variable
+
+ USAGE
+   String_Type getenv(String_Type var)
+
+ DESCRIPTION
+   The `getenv' function returns a string that represents the
+   value of an environment variable `var'.  It will return
+   `NULL' if there is no environment variable whose name is given
+   by `var'.
+
+ EXAMPLE
+
+       if (NULL != getenv ("USE_COLOR"))
+         {
+           set_color ("normal", "white", "blue");
+           set_color ("status", "black", "gray");
+           USE_ANSI_COLORS = 1;
+         }
+
+
+ SEE ALSO
+   putenv, strlen, is_defined
+--------------------------------------------------------------
+
+implements
+
+ SYNOPSIS
+   Name a private namespace
+
+ USAGE
+   implements (String_Type name);
+
+ DESCRIPTION
+   The `implements' function may be used to name the private
+   namespace associated with the current compilation unit.  Doing so
+   will enable access to the members of the namespace from outside the
+   unit.  The name of the global namespace is `Global'.
+
+ EXAMPLE
+   Suppose that some file `t.sl' contains:
+
+        implements ("Ts_Private");
+        static define message (x)
+        {
+           Global->vmessage ("Ts_Private message: %s", x);
+        }
+        message ("hello");
+
+   will produce `"Ts_Private message: hello"'.  This `message'
+   function may be accessed from outside via:
+
+       Ts_Private->message ("hi");
+
+
+ NOTES
+   Since `message' is an intrinsic function, it is global and may
+   not be redefined in the global namespace.
+
+ SEE ALSO
+   use_namespace, current_namespace, import
+--------------------------------------------------------------
+
+putenv
+
+ SYNOPSIS
+   Add or change an environment variable
+
+ USAGE
+   putenv (String_Type s)
+
+ DESCRIPTION
+    This functions adds string `s' to the environment.  Typically,
+    `s' should of the form `"name=value"'.  The function
+    signals a S-Lang error upon failure.
+
+ NOTES
+    This function is not available on all systems.
+
+ SEE ALSO
+   getenv, sprintf
+--------------------------------------------------------------
+
+use_namespace
+
+ SYNOPSIS
+   Change to another namespace
+
+ USAGE
+   use_namespace (String_Type name)
+
+ DESCRIPTION
+   The `use_namespace' function changes the current namespace to
+   the one specified by the parameter.  If the specified namespace
+   does not exist, an error will be generated.
+
+ SEE ALSO
+   implements, current_namespace, import
+--------------------------------------------------------------
+
+path_basename
+
+ SYNOPSIS
+   Get the basename part of a pathname
+
+ USAGE
+   String_Type path_basename (String_Type path)
+
+ DESCRIPTION
+   The `path_basename' function returns the basename associated
+   with the `path' parameter.  The basename is the non-directory
+   part of the filename, e.g., on unix `c' is the basename of
+   `/a/b/c'.
+
+ SEE ALSO
+   path_dirname, path_extname, path_concat, path_is_absolute
+--------------------------------------------------------------
+
+path_concat
+
+ SYNOPSIS
+   Combine elements of a pathname
+
+ USAGE
+   String_Type path_concat (String_Type dir, String_Type basename)
+
+ DESCRIPTION
+   The `path_concat' function combines the arguments `dir' and
+   `basename' to produce a pathname.  For example, on unix is
+   `dir' is `x/y' and `basename' is `z', then the
+   function will return `x/y/z'.
+
+ SEE ALSO
+   path_dirname, path_basename, path_extname, path_is_absolute
+--------------------------------------------------------------
+
+path_dirname
+
+ SYNOPSIS
+   Get the directory name part of a pathname
+
+ USAGE
+   String_Type path_dirname (String_Type path)
+
+ DESCRIPTION
+   The `path_dirname' function returns the directory name
+   associated with a specified pathname.
+
+ NOTES
+   On systems that include a drive specifier as part of the pathname,
+   the value returned by this function will include the driver
+   specifier.
+
+ SEE ALSO
+   path_basename, path_extname, path_concat, path_is_absolute
+--------------------------------------------------------------
+
+path_extname
+
+ SYNOPSIS
+   Return the extension part of a pathname
+
+ USAGE
+   String_Type path_extname (String_Type path)
+
+ DESCRIPTION
+   The `path_extname' function returns the extension portion of a
+   specified pathname.  If an extension is present, this function will
+   also include the dot as part of the extension, i.e., if `path'
+   is `file.c', then this function returns `".c"'.  If no
+   extension is present, the function returns an empty string `""'.
+
+ NOTES
+   Under VMS, the file version number is not returned as part of the
+   extension.
+
+ SEE ALSO
+   path_sans_extname, path_dirname, path_basename, path_concat, path_is_absolute
+--------------------------------------------------------------
+
+path_get_delimiter
+
+ SYNOPSIS
+   Get the value of a search-path delimiter
+
+ USAGE
+   Char_Type path_get_delimiter ()
+
+ DESCRIPTION
+   This function returns the value of the character used to delimit
+   fields of a search-path.
+
+ SEE ALSO
+   set_slang_load_path, get_slang_load_path
+--------------------------------------------------------------
+
+path_is_absolute
+
+ SYNOPSIS
+   Determine whether or not a pathname is absolute
+
+ USAGE
+   Int_Type path_is_absolute (String_Type path)
+
+ DESCRIPTION
+   The `path_is_absolute' function will return non-zero is
+   `path' refers to an absolute pathname, otherwise it returns zero.
+
+ SEE ALSO
+   path_dirname, path_basename, path_extname, path_concat
+--------------------------------------------------------------
+
+path_sans_extname
+
+ SYNOPSIS
+   Strip the extension from a pathname
+
+ USAGE
+   String_Type path_sans_extname (String_Type path)
+
+ DESCRIPTION
+   The `path_sans_extname' function removes the file name extension
+   (including the dot) from the path and returns the result.
+
+ SEE ALSO
+   path_extname, path_basename, path_dirname, path_concat
+--------------------------------------------------------------
+
+close
+
+ SYNOPSIS
+   Close an open file descriptor
+
+ USAGE
+   Int_Type close (FD_Type fd)
+
+ DESCRIPTION
+   The `close' function is used to open file descriptor of type
+   `FD_Type'.  Upon success 0 is returned, otherwise the function
+   returns -1 and sets `errno' accordingly.
+
+ SEE ALSO
+   open, fclose, read, write
+--------------------------------------------------------------
+
+dup_fd
+
+ SYNOPSIS
+   Duplicate a file descriptor
+
+ USAGE
+   FD_Type dup_fd (FD_Type fd)
+
+ DESCRIPTION
+   The `dup_fd' function duplicates and file descriptor and returns
+   its duplicate.  If the function fails, NULL will be returned and
+   `errno' set accordingly.
+
+ NOTES
+   This function is essentually a wrapper around the POSIX `dup'
+   function.
+
+ SEE ALSO
+   open, close
+--------------------------------------------------------------
+
+fileno
+
+ SYNOPSIS
+   Convert a stdio File_Type object to a FD_Type descriptor
+
+ USAGE
+   FD_Type fileno (File_Type fp)
+
+ DESCRIPTION
+   The `fileno' function returns the `FD_Type' descriptor
+   associated with the `File_Type' file pointer.  Upon failure,
+   NULL is returned.
+
+ SEE ALSO
+   fopen, open, fclose, close, dup_fd
+--------------------------------------------------------------
+
+isatty
+
+ SYNOPSIS
+   Determine if an open file descriptor refers to a terminal
+
+ USAGE
+   Int_Type isatty (FD_Type or File_Type fd)
+
+ DESCRIPTION
+   This function returns 1 if the file descriptor `fd' refers to a
+   terminal; otherwise it returns 0.  The object `fd' may either
+   be a `File_Type' stdio descriptor or an `FD_Type' object.
+
+ SEE ALSO
+   fopen, fclose, fileno
+--------------------------------------------------------------
+
+lseek
+
+ SYNOPSIS
+   Reposition a file descriptor's file pointer
+
+ USAGE
+   Long_Type lseek (FD_Type fd, Long_Type ofs, int mode)
+
+        SEEK_SET   Set the offset to ofs
+        SEEK_CUR   Add ofs to the current offset
+        SEEK_END   Add ofs to the current file size
+
+
+ NOTES
+   Not all file descriptors are capable of supporting the seek
+   operation, e.g., a descriptor associated with a pipe.
+   
+   By using `SEEK_END' with a positive value of the `ofs'
+   parameter, it is possible to position the file pointer beyond the
+   current size of the file.
+
+ SEE ALSO
+   fseek, ftell, open, close
+--------------------------------------------------------------
+
+open
+
+ SYNOPSIS
+   Open a file
+
+ USAGE
+   FD_Type open (String_Type filename, Int_Type flags [,Int_Type mode])
+
+ DESCRIPTION
+   The `open' function attempts to open a file specified by the
+   `filename' parameter according to the `flags' parameter,
+   which must be one of the following values:
+
+        O_RDONLY   (read-only)
+        O_WRONLY   (write-only)
+        O_RDWR     (read/write)
+
+   In addition, `flags' may also be bitwise-or'd with any of the
+   following:
+
+        O_BINARY   (open the file in binary mode)
+        O_TEXT     (open the file in text mode)
+        O_CREAT    (create file if it does not exist)
+        O_EXCL     (fail if the file already exists)
+        O_NOCTTY   (do not make the device the controlling terminal)
+        O_TRUNC    (truncate the file if it exists)
+        O_APPEND   (open the file in append mode)
+        O_NONBLOCK (open the file in non-blocking mode)
+
+   Some of these flags only make sense when combined with other flags.
+   For example, if O_EXCL is used, then O_CREAT must also be
+   specified, otherwise unpredictable behavior may result.
+   
+   If `O_CREAT' is used for the `flags' parameter then the
+   `mode' parameter must be present. `mode' specifies the
+   permissions to use if a new file is created. The actual file
+   permissions will be affected by the process's `umask' via
+   `mode&~umask'.  The `mode' parameter's value is
+   constructed via bitwise-or of the following values:
+
+        S_IRWXU    (Owner has read/write/execute permission)
+        S_IRUSR    (Owner has read permission)
+        S_IWUSR    (Owner has write permission)
+        S_IXUSR    (Owner has execute permission)
+        S_IRWXG    (Group has read/write/execute permission)
+        S_IRGRP    (Group has read permission)
+        S_IWGRP    (Group has write permission)
+        S_IXGRP    (Group has execute permission)
+        S_IRWXO    (Others have read/write/execute permission)
+        S_IROTH    (Others have read permission)
+        S_IWOTH    (Others have write permission)
+        S_IXOTH    (Others have execute permission)
+
+   Upon success `open' returns a file descriptor object
+   (`FD_Type'), otherwise `NULL' is returned and `errno'
+   is set.
+
+ NOTES
+   If you are not familiar with the `open' system call, then it
+   is recommended that you use `fopen' instead.
+
+ SEE ALSO
+   fopen, close, read, write, stat_file
+--------------------------------------------------------------
+
+read
+
+ SYNOPSIS
+   Read from an open file descriptor
+
+ USAGE
+   UInt_Type read (FD_Type fd, Ref_Type buf, UInt_Type num)
+
+ DESCRIPTION
+   The `read' function attempts to read at most `num' bytes
+   into the variable indicated by `buf' from the open file
+   descriptor `fd'.  It returns the number of bytes read, or -1
+   and sets `errno' upon failure.  The number of bytes read may be
+   less than `num', and will be zero if an attempt is made to read
+   past the end of the file.
+
+ NOTES
+   `read' is a low-level function and may return -1 for a variety
+   of reasons.  For example, if non-blocking I/O has been specified for
+   the open file descriptor and no data is available for reading then
+   the function will return -1 and set `errno' to `EAGAIN'.
+
+ SEE ALSO
+   fread, open, close, write
+--------------------------------------------------------------
+
+write
+
+ SYNOPSIS
+   Write to an open file descriptor
+
+ USAGE
+   UInt_Type write (FD_Type fd, BString_Type buf)
+
+ DESCRIPTION
+   The `write' function attempts to write the bytes specified by
+   the `buf' parameter to the open file descriptor `fd'.  It
+   returns the number of bytes successfully written, or -1 and sets
+   `errno' upon failure.  The number of bytes written may be less
+   than `length(buf)'.
+
+ SEE ALSO
+   read, fwrite, open, close
+--------------------------------------------------------------
+
+errno
+
+ SYNOPSIS
+   Error code set by system functions.
+
+ USAGE
+   Integer_Type errno
+
+ DESCRIPTION
+   A system function can fail for a variety of reasons.  For example, a
+   file operation may fail because lack of disk space, or the process
+   does not have permission to perform the operation.  Such functions
+   will return `-1' and set the variable `errno' to an error
+   code describing the reason for failure.
+   
+   Particular values of `errno' may be specified by the following
+   symbolic constants (read-only variables) and the corresponding
+   `errno_string' value:
+
+        EPERM            "Not owner"
+        ENOENT           "No such file or directory"
+        ESRCH            "No such process"
+        ENXIO            "No such device or address"
+        ENOEXEC          "Exec format error"
+        EBADF            "Bad file number"
+        ECHILD           "No children"
+        ENOMEM           "Not enough core"
+        EACCES           "Permission denied"
+        EFAULT           "Bad address"
+        ENOTBLK          "Block device required"
+        EBUSY            "Mount device busy"
+        EEXIST           "File exists"
+        EXDEV            "Cross-device link"
+        ENODEV           "No such device"
+        ENOTDIR          "Not a directory"
+        EISDIR           "Is a directory"
+        EINVAL           "Invalid argument"
+        ENFILE           "File table overflow"
+        EMFILE           "Too many open files"
+        ENOTTY           "Not a typewriter"
+        ETXTBSY          "Text file busy"
+        EFBIG            "File too large"
+        ENOSPC           "No space left on device"
+        ESPIPE           "Illegal seek"
+        EROFS            "Read-only file system"
+        EMLINK           "Too many links"
+        EPIPE            "Broken pipe"
+        ELOOP            "Too many levels of symbolic links"
+        ENAMETOOLONG     "File name too long"
+
+
+ EXAMPLE
+   The `mkdir' function will attempt to create a directory.  If
+   that directory already exists, the function will fail and set
+   `errno' to `EEXIST'.
+
+       define create_dir (dir)
+       {
+          if (0 == mkdir (dir)) return;
+          if (errno != EEXIST)
+            error ("mkdir %s failied: %s", dir, errno_string);
+       }
+
+
+ SEE ALSO
+   errno_string, error, mkdir
+--------------------------------------------------------------
+
+errno_string
+
+ SYNOPSIS
+   Return a string describing an errno.
+
+ USAGE
+   String_Type errno_string (Integer_Type err)
+
+ DESCRIPTION
+   The `errno_string' function returns a string describing the
+   integer error code `err'.  The variable `err' usually
+   corresponds to the `errno' intrinsic function.  See the
+   description for `errno' for more information.
+
+ EXAMPLE
+   The `errno_string' function may be used as follows:
+
+       define sizeof_file (file)
+       {
+          variable st = stat (file);
+          if (st == NULL)
+            verror ("%s: %s", file, errno_string (errno);
+          return st.st_size;
+       }
+
+
+ SEE ALSO
+   errno, stat, verror
+--------------------------------------------------------------
+
+getegid
+
+ SYNOPSIS
+   Get the effective group id
+
+ USAGE
+   Int_Type getegid ()
+
+ DESCRIPTION
+   The `getegid' function returns the effective group ID of the
+   current process.
+
+ NOTES
+   This function is not supported by all systems.
+
+ SEE ALSO
+   getgid, geteuid, setgid
+--------------------------------------------------------------
+
+geteuid
+
+ SYNOPSIS
+   Get the effective user-id of the current process
+
+ USAGE
+   Int_Type geteuid ()
+
+ DESCRIPTION
+   The `geteuid' function returns the effective user-id of the
+   current process.
+
+ NOTES
+   This function is not supported by all systems.
+
+ SEE ALSO
+   getuid, setuid, setgid
+--------------------------------------------------------------
+
+getgid
+
+ SYNOPSIS
+   Get the group id
+
+ USAGE
+   Integer_Type getgid ()
+
+ DESCRIPTION
+   The `getgid' function returns the real group id of the current
+   process.
+
+ NOTES
+   This function is not supported by all systems.
+
+ SEE ALSO
+   getpid, getppid
+--------------------------------------------------------------
+
+getpid
+
+ SYNOPSIS
+   Get the current process id
+
+ USAGE
+   Integer_Type getpid ()
+
+ DESCRIPTION
+   The `getpid' function returns the current process identification
+   number.
+
+ SEE ALSO
+   getppid, getgid
+--------------------------------------------------------------
+
+getppid
+
+ SYNOPSIS
+   Get the parent process id
+
+ USAGE
+   Integer_Type getppid ()
+
+ DESCRIPTION
+   The `getpid' function returns the process identification
+   number of the parent process.
+
+ NOTES
+   This function is not supported by all systems.
+
+ SEE ALSO
+   getpid, getgid
+--------------------------------------------------------------
+
+getuid
+
+ SYNOPSIS
+   Get the user-id of the current process
+
+ USAGE
+   Int_Type getuid ()
+
+ DESCRIPTION
+   The `getuid' function returns the user-id of the current
+   process.
+
+ NOTES
+   This function is not supported by all systems.
+
+ SEE ALSO
+   getuid, getegid
+--------------------------------------------------------------
+
+kill
+
+ SYNOPSIS
+   Send a signal to a process
+
+ USAGE
+   Integer_Type kill (Integer_Type pid, Integer_Type sig)
+
+ DESCRIPTION
+   This function may be used to send a signal given by the integer `sig'
+   to the process specified by `pid'.  The function returns zero upon
+   success and `-1' upon failure setting errno accordingly.
+
+ EXAMPLE
+   The `kill' function may be used to determine whether or not
+   a specific process exists:
+
+       define process_exists (pid)
+       {
+          if (-1 == kill (pid, 0))
+            return 0;     % Process does not exist
+          return 1;
+       }
+
+
+ NOTES
+   This function is not supported by all systems.
+
+ SEE ALSO
+   getpid
+--------------------------------------------------------------
+
+mkfifo
+
+ SYNOPSIS
+   Create a named pipe
+
+ USAGE
+   Int_Type mkfifo (String_Type name, Int_Type mode)
+
+ DESCRIPTION
+   The `mkfifo' attempts to create a named pipe with the specified
+   name and mode (modified by the process's umask).  The function
+   returns 0 upon success, or -1 and sets `errno' upon failure.
+
+ NOTES
+   Not all systems support the `mkfifo' function and even on
+   systems that do implement the `mkfifo' system call, the
+   underlying file system may not support the concept of a named pipe,
+   e.g, an NFS filesystem.
+
+ SEE ALSO
+   stat_file
+--------------------------------------------------------------
+
+setgid
+
+ SYNOPSIS
+   Set the group-id of the current process
+
+ USAGE
+   Int_Type setgid (Int_Type gid)
+
+ DESCRIPTION
+   The `setgid' function sets the effective group-id of the current
+   process.  It returns zero upon success, or -1 upon error and sets
+   `errno' appropriately.
+
+ NOTES
+   This function is not supported by all systems.
+
+ SEE ALSO
+   getgid, setuid
+--------------------------------------------------------------
+
+setpgid
+
+ SYNOPSIS
+   Set the process group-id
+
+ USAGE
+   Int_Type setpgid (Int_Type pid, Int_Type gid)
+
+ DESCRIPTION
+   The `setpgid' function sets the group-id `gid' of the
+   process whose process-id is `pid'.  If `pid' is 0, then the
+   current process-id will be used.  If `pgid' is 0, then the pid
+   of the affected process will be used.
+   
+   If successful zero will be returned, otherwise the function will
+   return -1 and set `errno' accordingly.
+
+ NOTES
+   This function is not supported by all systems.
+
+ SEE ALSO
+   setgid, setuid
+--------------------------------------------------------------
+
+setuid
+
+ SYNOPSIS
+   Set the user-id of the current process
+
+ USAGE
+   Int_Type setuid (Int_Type id)
+
+ DESCRIPTION
+   The `setuid' function sets the effective user-id of the current
+   process.  It returns zero upon success, or -1 upon error and sets
+   `errno' appropriately.
+
+ NOTES
+   This function is not supported by all systems.
+
+ SEE ALSO
+   setgid, setpgid, getuid, geteuid
+--------------------------------------------------------------
+
+sleep
+
+ SYNOPSIS
+   Pause for a specified number of seconds
+
+ USAGE
+   sleep (Double_Type n)
+
+ DESCRIPTION
+   The `sleep' function delays the current process for the
+   specified number of seconds.  If it is interrupted by a signal, it
+   will return prematurely.
+
+ NOTES
+   Not all system support sleeping for a fractional part of a second.
+--------------------------------------------------------------
+
+system
+
+ SYNOPSIS
+   Execute a shell command
+
+ USAGE
+   Integer_Type system (String_Type cmd)
+
+ DESCRIPTION
+   The `system' function may be used to execute the string
+   expression `cmd' in an inferior shell.  This function is an
+   interface to the C `system' function which returns an
+   implementation-defined result.   On Linux, it returns 127 if the
+   inferior shell could not be invoked, -1 if there was some other
+   error, otherwise it returns the return code for `cmd'.
+
+ EXAMPLE
+
+       define dir ()
+       {
+          () = system ("DIR");
+       }
+
+   displays a directory listing of the current directory under MSDOS or
+   VMS.
+
+ SEE ALSO
+   popen, listdir
+--------------------------------------------------------------
+
+umask
+
+ SYNOPSIS
+   Set the file creation mask
+
+ USAGE
+   Int_Type umask (Int_Type m)
+
+ DESCRIPTION
+   The `umask' function sets the file creation mask to `m' and
+   returns the previous mask.
+
+ SEE ALSO
+   stat_file
+--------------------------------------------------------------
+
+uname
+
+ SYNOPSIS
+   Get the system name
+
+ USAGE
+   Struct_Tye uname ()
+
+ DESCRIPTION
+   The `uname' function returns a structure containing information
+   about the operating system.  The structure contains the following
+   fields:
+
+          sysname  (Name of the operating system)
+          nodename (Name of the node within the network)
+          release  (Release level of the OS)
+          version  (Current version of the release)
+          machine  (Name of the hardware)
+
+
+ NOTES
+   Not all systems support this function.
+
+ SEE ALSO
+   getenv, pack, unpack
+--------------------------------------------------------------
+
+__pop_args
+
+ SYNOPSIS
+   Remove n function arguments from the stack
+
+ USAGE
+   variable args = __pop_args(Integer_Type n);
+
+ DESCRIPTION
+   This function together with the companion function `__push_args'
+   is useful for passing the arguments of a function to another function.
+   `__pop_args' returns an array of `n' structures with a
+   single structure field called `value', which represents the value
+   of the argument.
+
+ EXAMPLE
+   Consider the following `print' function.  It prints all its
+   arguments to `stdout' separated by spaces:
+
+       define print ()
+       {
+          variable i;
+          variable args = __pop_args (_NARGS);
+      
+          for (i = 0; i < _NARGS; i++)
+            {
+               () = fputs (string (args[i].value), stdout);
+               () = fputs (" ", stdout);
+            }
+          () = fputs ("\n", stdout);
+          () = fflush (stdout);
+       }
+
+   Now consider the problem of defining a function called `ones'
+   that returns a multi-dimensional array with all the elements set to
+   1.  For example, `ones(10)' should return a 1-d array of ones,
+   whereas `ones(10,20)' should return a 10x20 array.
+
+       define ones ()
+       {
+         !if (_NARGS) return 1;
+         variable a;
+      
+         a = __pop_args (_NARGS);
+         return @Array_Type (Integer_Type, [__push_args (a)]) + 1;
+       }
+
+   Here, `__push_args' was used to push on the arguments passed to
+   the `ones' function onto the stack to be used when dereferencing
+   `Array_Type'.
+
+ SEE ALSO
+   __push_args, typeof, _pop_n
+--------------------------------------------------------------
+
+__push_args
+
+ SYNOPSIS
+   Remove n function arguments onto the stack
+
+ USAGE
+   __push_args (Struct_Type args);
+
+ DESCRIPTION
+   This function together with the companion function `__pop_args'
+   is useful for passing the arguments of one function to another.
+   See the desription of `__pop_args' for more information.
+
+ SEE ALSO
+   __pop_args, typeof, _pop_n
+--------------------------------------------------------------
+
+_pop_n
+
+ SYNOPSIS
+   Remove objects from the stack
+
+ USAGE
+   _pop_n (Integer_Type n);
+
+ DESCRIPTION
+   The `_pop_n' function pops `n' objects from the top of the
+   stack.
+
+ EXAMPLE
+
+       define add3 ()
+       {
+          variable x, y, z;
+          if (_NARGS != 3)
+            {
+               _pop_n (_NARGS);
+               error ("add3: Expecting 3 arguments");
+            }
+          (x, y, z) = ();
+          return x + y + z;
+       }
+
+
+ SEE ALSO
+   _stkdepth, pop
+--------------------------------------------------------------
+
+_print_stack
+
+ SYNOPSIS
+   print the values on the stack.
+
+ USAGE
+   _print_stack ()
+
+ DESCRIPTION
+   This function dumps out what is currently on the S-Lang.  It does not
+   alter the stack and it is usually used for debugging purposes.
+
+ SEE ALSO
+   _stkdepth, string
+--------------------------------------------------------------
+
+_stk_reverse
+
+ SYNOPSIS
+   Reverse the order of the objects on the stack.
+
+ USAGE
+   _stk_reverse (Integer_Type n)
+
+ DESCRIPTION
+   The `_stk_reverse' function reverses the order of the top
+   `n' items on the stack.
+
+ SEE ALSO
+   _stkdepth, _stk_roll
+--------------------------------------------------------------
+
+_stk_roll
+
+ SYNOPSIS
+   Roll items on the stack
+
+ USAGE
+   _stk_roll (Integer_Type n);
+
+ DESCRIPTION
+   This function may be used to alter the arrangement of objects on the
+   stack.  Specifically, if the integer `n' is positive, the top
+   `n' items on the stack are rotated up.  If
+   `n' is negative, the top `abs(n)' items on the stack are
+   rotated down.
+
+ EXAMPLE
+   If the stack looks like:
+
+       item-0
+       item-1
+       item-2
+       item-3
+
+   where `item-0' is at the top of the stack, then
+   `_stk_roll(-3)' will change the stack to:
+
+       item-2
+       item-0
+       item-1
+       item-3
+
+
+ NOTES
+   This function only has an effect for `abs(n) > 1'.
+
+ SEE ALSO
+   _stkdepth, _stk_reverse, _pop_n, _print_stack
+--------------------------------------------------------------
+
+_stkdepth
+
+ USAGE
+   Get the number of objects currently on the stack.
+
+ SYNOPSIS
+   Integer_Type _stkdepth ()
+
+ DESCRIPTION
+   The `_stkdepth' function returns number of items on stack prior
+   to the call of `_stkdepth'.
+
+ SEE ALSO
+   _print_stack, _stk_reverse, _stk_roll
+--------------------------------------------------------------
+
+dup
+
+ SYNOPSIS
+   Duplicate the value at the top of the stack
+
+ USAGE
+   dup ()
+
+ DESCRIPTION
+   This function returns an exact duplicate of the object on top of the
+   stack.  For some objects such as arrays or structures, it creates a
+   new reference to the array.  However, for simple scalar S-Lang types such
+   as strings, integers, and doubles, it creates a new copy of the
+   object.
+
+ SEE ALSO
+   pop, typeof
+--------------------------------------------------------------
+
+exch
+
+ SYNOPSIS
+   Exchange two items on the stack
+
+ USAGE
+   exch ()
+
+ DESCRIPTION
+   The `exch' swaps the two top items on the stack.
+
+ SEE ALSO
+   pop, _stk_reverse, _stk_roll
+--------------------------------------------------------------
+
+pop
+
+ SYNOPSIS
+   Discard an item from the stack
+
+ USAGE
+   pop ()
+
+ DESCRIPTION
+   The `pop' function removes the top item from the stack.
+
+ SEE ALSO
+   _pop_n
+--------------------------------------------------------------
+
+clearerr
+
+ SYNOPSIS
+   Clear the error of a file stream
+
+ USAGE
+   clearerr (File_Type fp
+
+ DESCRIPTION
+   The `clearerr' function clears the error and end-of-file flags
+   associated with the open file stream `fp'.
+
+ SEE ALSO
+   ferror, feof, fopen
+--------------------------------------------------------------
+
+fclose
+
+ SYNOPSIS
+   Close a file
+
+ USAGE
+   Integer_Type fclose (File_Type fp)
+
+ DESCRIPTION
+   The `fclose' function may be used to close an open file pointer
+   `fp'.  Upon success it returns zero, and upon failure it sets
+   `errno' and returns `-1'.  Failure usually indicates a that
+   the file system is full or that `fp' does not refer to an open file.
+
+ NOTES
+   Many C programmers call `fclose' without checking the return
+   value.  The S-Lang language requires the programmer to explicitly
+   handle any value returned by a S-Lang function.  The simplest way to
+   handle the return value from `fclose' is to use it as:
+
+        () = fclose (fp);
+
+
+ SEE ALSO
+   fopen, fgets, fflush, pclose, errno
+--------------------------------------------------------------
+
+fdopen
+
+ SYNOPSIS
+   Convert a FD_Type file descriptor to a stdio File_Type object
+
+ USAGE
+   File_Type fdopen (FD_Type, String_Type mode)
+
+ DESCRIPTION
+   The `fdopen' function creates and returns a stdio
+   `File_Type' object from the open `FD_Type'
+   descriptor `fd'.  The `mode' parameter corresponds to the
+   `mode' parameter of the `fopen' function and must be
+   consistent with the mode of the descriptor `fd'.  The function
+   returns NULL upon failure and sets `errno'.
+
+ NOTES
+   The `fclose' function does not close the `File_Type' object
+   returned from this function.  The underlying file object must be
+   closed by the `close' function.
+
+ SEE ALSO
+   fileno, fopen, open, close, fclose
+--------------------------------------------------------------
+
+feof
+
+ SYNOPSIS
+   Get the end-of-file status
+
+ USAGE
+   Integer_Type feof (File_Type fp)
+
+ DESCRIPTION
+   This function may be used to determine the state of the end-of-file
+   indicator of the open file descriptor `fp'.  It returns `0'
+   if the indicator is not set, or non-zero if it is.  The end-of-file
+   indicator may be cleared by the `clearerr' function.
+
+ SEE ALSO
+   ferror, clearerr, fopen
+--------------------------------------------------------------
+
+ferror
+
+ SYNOPSIS
+   Determine the error status of an open file descriptor
+
+ USAGE
+   Integer_Type ferror (File_Type fp)
+
+ DESCRIPTION
+   This function may be used to determine the state of the error
+   indicator of the open file descriptor `fp'.  It returns `0'
+   if the indicator is not set, or non-zero if it is.  The error
+   indicator may be cleared by the `clearerr' function.
+
+ SEE ALSO
+   feof, clearerr, fopen
+--------------------------------------------------------------
+
+fflush
+
+ SYNOPSIS
+   Flush an output stream
+
+ USAGE
+   Integer_Type fflush (File_Type fp)
+
+ DESCRIPTION
+   The `fflush' function may be used to update the _output_
+   stream specified by `fp'.  It returns `0' upon success, or
+   `-1' upon failure and sets `errno' accordingly.  In
+   particular, this function will fail if `fp' does not represent
+   an output stream, or if `fp' is associated with a disk file and
+   there is insufficient disk space.
+
+ EXAMPLE
+   This example illustrates how to use the `fflush' function
+   without regard to the return value:
+
+       () = fputs ("Enter value> ", stdout);
+       () = fflush (stdout);
+
+
+ NOTES
+   Many C programmers disregard the return value from the `fflush'
+   function.  The above example illustrates how to properly do this in
+   the S-Lang langauge.
+
+ SEE ALSO
+   fopen, fclose
+--------------------------------------------------------------
+
+fgets
+
+ SYNOPSIS
+   Read a line from a file.
+
+ USAGE
+   Integer_Type fgets (SLang_Ref_Type ref, File_Type fp)
+
+ DESCRIPTION
+   `fgets' reads a line from the open file specified by `fp'
+   and places the characters in the variable whose reference is
+   specified by `ref'.
+   It returns `-1' if `fp' is not associated with an open file
+   or an attempt was made to read at the end the file; otherwise, it
+   returns the number of characters read.
+
+ EXAMPLE
+   The following example returns the lines of a file via a linked list:
+
+       define read_file (file)
+       {
+          variable buf, fp, root, tail;
+          variable list_type = struct { text, next };
+   
+          root = NULL;
+   
+          fp = fopen(file, "r");
+          if (fp == NULL)
+            error("fopen %s failed." file);
+          while (-1 != fgets (&buf, fp))
+            {
+               if (root == NULL)
+                 {
+                    root = @list_type;
+                    tail = root;
+                 }
+               else
+                 {
+                    tail.next = @list_type;
+                    tail = tail.next;
+                 }
+               tail.text = buf;
+               tail.next = NULL;
+            }
+          () = fclose (fp);
+          return root;
+       }
+
+
+ SEE ALSO
+   fopen, fclose, fputs, fread, error
+--------------------------------------------------------------
+
+fgetslines
+
+ SYNOPSIS
+   Read all the lines from an open file
+
+ USAGE
+   String_Type[] fgetslines (File_Type fp)
+
+ DESCRIPTION
+   The `fgetslines' function returns all the remaining lines as an
+   array of strings in the file specified by the open file pointer
+   `fp'.  If the file is empty, an empty string array will be
+   returned.  The function returns `NULL' upon error.
+
+ EXAMPLE
+   The following function returns the number of lines in a file:
+
+       define count_lines_in_file (file)
+       {
+          variable fp, lines;
+   
+          fp = fopen (file, "r");
+          if (fp == NULL)
+            return -1;
+          
+          lines = fgetslines (fp);
+          if (lines == NULL)
+            return -1;
+          
+          return length (lines);
+       }
+
+   Note that the file was implicitly closed by the function.
+
+ NOTES
+   This function should not be used if the file contains many lines
+   since that would require that all the lines be read into memory.
+
+ SEE ALSO
+   fgets, fread, fopen
+--------------------------------------------------------------
+
+fopen
+
+ SYNOPSIS
+   Open a file
+
+ USAGE
+   File_Type fopen (String_Type f, String_Type m)
+
+ DESCRIPTION
+   The `fopen' function opens a file `f' according to the mode
+   string `m'.  Allowed values for `m' are:
+
+        "r"    Read only
+        "w"    Write only
+        "a"    Append
+        "r+"   Reading and writing at the beginning of the file.
+        "w+"   Reading and writing.  The file is created if it does not
+                 exist; otherwise, it is truncated.
+        "a+"   Reading and writing at the end of the file.  The file is created
+                 if it does not already exist.
+
+   In addition, the mode string can also include the letter `'b''
+   as the last character to indicate that the file is to be opened in
+   binary mode.
+   
+   Upon success, `fopen' a `File_Type' object which is meant to
+   be used in other operations that require an open file.  Upon
+   failure, the function returns `NULL'.
+
+ EXAMPLE
+   The following function opens a file in append mode and writes a
+   string to it:
+
+       define append_string_to_file (file, str)
+       {
+          variable fp = fopen (file, "a");
+          if (fp == NULL) verror ("%s could not be opened", file);
+          () = fputs (string, fp);
+          () = fclose (fp);
+       }
+
+   Note that the return values from `fputs' and `fclose' are
+   ignored.
+
+ NOTES
+   There is no need to explicitly close a file opened with `fopen'.
+   If the returned `File_Type' object goes out of scope, S-Lang
+   will automatically close the file.  However, explicitly closing a
+   file after use is recommended.
+
+ SEE ALSO
+   fclose, fgets, fputs, popen
+--------------------------------------------------------------
+
+fprintf
+
+ SYNOPSIS
+   Create and write a formatted string to a file
+
+ USAGE
+   Int_Type fprintf (File_Type fp, String_Type fmt, ...)
+
+ DESCRIPTION
+   `fprintf' formats the objects specified by the variable argument
+   list according to the format `fmt' and write the result to the
+   open file pointer `fp'.  
+   
+   The format string obeys the same syntax and semantics as the
+   `sprintf' format string.  See the description of the
+   `sprintf' function for more information.
+   
+   `fprintf' returns the number of characters written to the file,
+   or -1 upon error.
+
+ SEE ALSO
+   fputs, printf, fwrite, message
+--------------------------------------------------------------
+
+fputs
+
+ SYNOPSIS
+   Write a string to an open stream
+
+ USAGE
+   Integer_Type fputs (String_Type s, File_Type fp);
+
+ DESCRIPTION
+   The `fputs' function writes the string `s' to the open file
+   pointer `fp'. It returns -1 upon failure and sets `errno',
+   otherwise it returns the length of the string.
+
+ EXAMPLE
+   The following function opens a file in append mode and uses the
+   `fputs' function to write to it.
+
+       define append_string_to_file (str, file)
+       {
+          variable fp;
+          fp = fopen (file, "a");
+          if (fp == NULL) verror ("Unable to open %s", file);
+          if ((-1 == fputs (s, fp))
+              or (-1 == fclose (fp)))
+            verror ("Error writing to %s", file);
+       }
+
+
+ NOTES
+   One must not disregard the return value from the `fputs'
+   function, as many C programmers do.  Doing so may lead to a stack
+   overflow error.
+   
+   To write an object that contains embedded null characters, use the
+   `fwrite' function.
+
+ SEE ALSO
+   fclose, fopen, fgets, fwrite
+--------------------------------------------------------------
+
+fread
+
+ SYNOPSIS
+   Read binary data from a file
+
+ USAGE
+   UInt_Type fread (Ref_Type b, DataType_Type t, UInt_Type n, File_Type fp)
+
+ DESCRIPTION
+   The `fread' function may be used to read `n' objects of type
+   `t' from an open file pointer `fp'.  Upon success, it
+   returns the number of objects read from the file and places the
+   objects in the variable specified by `b'.  Upon error or end of
+   file, it returns `-1'.  If more than one object is read from the
+   file, those objects will be placed in an array of the appropriate
+   size.  The exception to this is when reading `Char_Type' or
+   `UChar_Type' objects from a file, in which case the data will be
+   returned as an `n' character BString_Type binary string, but
+   only if `n'>1.
+
+ EXAMPLE
+   The following example illustrates how to read 50 bytes from a file:
+
+        define read_50_bytes_from_file (file)
+        {
+           variable fp, n, buf;
+           
+           fp = fopen (file, "rb");
+           if (fp == NULL) error ("Open failed");
+           n = fread (&buf, Char_Type, 50, fp);
+           if (n == -1)
+           error ("fread failed");
+           () = fclose (fp);
+           return buf;
+        }
+
+
+ NOTES
+   Use the `pack' and `unpack' functions to read data with a
+   specific byte-ordering.
+
+ SEE ALSO
+   fwrite, fgets, fopen, pack, unpack
+--------------------------------------------------------------
+
+fseek
+
+ SYNOPSIS
+   Reposition a stream
+
+ USAGE
+   Integer_Type fseek (File_Type fp, Integer_Type ofs, Integer_Type whence
+
+ DESCRIPTION
+   The `fseek' function may be used to reposition the file position
+   pointer associated with the open file stream `fp'. Specifically,
+   it moves the pointer `ofs' bytes relative to the position
+   indicated by `whence'.  If whence is set to one of the symbolic
+   constants `SEEK_SET', `SEEK_CUR', or `SEEK_END', the
+   offset is relative to the start of the file, the current position
+   indicator, or end-of-file, respectively.
+   
+   The function return zero upon success, or -1 upon failure and sets
+   `errno' accordingly.
+
+ EXAMPLE
+    define rewind (fp)
+    {
+       if (0 == fseek (fp, 0, SEEK_SET)) return;
+       vmessage ("rewind failed, reason: %s", errno_string (errno));
+    }
+
+ NOTES
+   The current implementation uses an integer to specify the offset.
+   One some systems, a long integer may be required making this
+   function fail for very large files, i.e., files that are longer than
+   the maximum value of an integer.
+
+ SEE ALSO
+   ftell, fopen
+--------------------------------------------------------------
+
+ftell
+
+ SYNOPSIS
+   Obtain the current position in an open stream
+
+ USAGE
+   Integer_Type ftell (File_Type fp)
+
+ DESCRIPTION
+   The ftell function may be used to obtain the current position in the
+   stream associated with the open file pointer `fp'.  It returns
+   the position of the pointer measured in bytes from the beginning of
+   the file.  Upon error, it returns `-1' and sets `errno'.
+
+ SEE ALSO
+   fseek, fopen
+--------------------------------------------------------------
+
+fwrite
+
+ SYNOPSIS
+   Write binary data to a file
+
+ USAGE
+   UInt_Type fwrite (b, File_Type fp)
+
+ DESCRIPTION
+   The `fwrite' may be used to write the object represented by
+   `b' to an open file.  If `b' is a string or an array, the
+   function will attempt to write all elements of the object to the
+   file.  It returns the number of objects successfully written,
+   otherwise it returns -1 upon error and sets `errno'
+   accordingly.
+
+ EXAMPLE
+   The following example illustrates how to write an integer array to a
+   file.  In this example, `fp' is an open file descriptor:
+
+        variable a = [1:50];     % 50 element integer array
+        if (50 != fwrite (a, fp))
+          error ("fwrite failed");
+
+   Here is how to write the array one element at a time:
+
+        variable a = [1:50];
+        foreach (a)
+          {
+             variable ai = ();
+             if (1 != fwrite(ai, fp))
+             error ("fwrite failed");
+          }
+
+
+ NOTES
+   Not all data types may support the `fwrite' operation.  However,
+   it is supported by all vector, scalar, and string objects.
+
+ SEE ALSO
+   fread, fputs, fopen, pack, unpack
+--------------------------------------------------------------
+
+pclose
+
+ SYNOPSIS
+   Close an object opened with popen
+
+ USAGE
+   Integer_Type pclose (File_Type fp)
+
+ DESCRIPTION
+   The `pclose' function waits for the process associated with
+   `fp' to exit and the returns the exit status of the command.
+
+ SEE ALSO
+   pclose, fclose
+--------------------------------------------------------------
+
+popen
+
+ SYNOPSIS
+   Open a process
+
+ USAGE
+   File_Type popen (String_Type cmd, String_Type mode)
+
+ DESCRIPTION
+   The `popen' function executes a process specified by `cmd'
+   and opens a unidirectional pipe to the newly created process.  The
+   `mode' indicates whether or not the pipe is open for reading
+   or writing.  Specifically, if `mode' is `"r"', then the
+   pipe is opened for reading, or if `mode' is `"w"', then the
+   pipe will be open for writing.
+   
+   Upon success, a `File_Type' pointer will be returned, otherwise
+   the function failed and `NULL' will be returned.
+
+ NOTES
+   This function is not available on all systems.
+
+ SEE ALSO
+   pclose, fopen
+--------------------------------------------------------------
+
+printf
+
+ SYNOPSIS
+   Create and write a formatted string to stdout
+
+ USAGE
+   Int_Type printf (String_Type fmt, ...)
+
+ DESCRIPTION
+   `fprintf' formats the objects specified by the variable argument
+   list according to the format `fmt' and write the result to
+   `stdout'.  This function is equivalent to `fprintf' used
+   with the `stdout' file pointer.  See `fprintf' for more
+   information.
+   
+   `printf' returns the number of characters written to the file,
+   or -1 upon error.
+
+ NOTES
+   Many C programmers do not check the return status of the
+   `printf' C library function.  Make sure that if you do not care
+   about whether or not the function succeeds, then code it as in the
+   following example:
+
+        () = printf ("%s laid %d eggs\n", chicken_name, num_egg);
+
+
+ SEE ALSO
+   fputs, printf, fwrite, message
+--------------------------------------------------------------
+
+Sprintf
+
+ SYNOPSIS
+   Format objects into a string
+
+ USAGE
+   String_Type Sprintf (String_Type format, ..., Integer_Type n)
+
+ DESCRIPTION
+   `Sprintf' formats a string from `n' objects according to
+   `format'.  Unlike `sprintf', the `Sprintf' function
+   requires the number of items to format.
+   
+   The format string is a C library `sprintf' style format
+   descriptor.  Briefly, the format string may consist of ordinary
+   characters (not including the `%' character), which are copied
+   into the output string as-is, and a conversion specification
+   introduced by the `%' character.  The `%' character must be
+   followed by at least one other character to specify the conversion:
+
+        s    value is a string
+        f    value is a floating point number
+        e    print float in exponential form, e.g., 2.345e08
+        g    print float as e or g, depending upon its value
+        c    value is an ascii character
+        %    print the percent character
+        d    print a signed decimal integer
+        u    print an unsigned decimal integer
+        o    print an integer as octal
+        X    print an integer as hexadecimal
+        S    convert value to a string and format as string
+
+   Note that `%S' is a S-Lang extension which will cause the value
+   to be formatted as string.  In fact, `sprintf("%S",x)' is
+   equivalent to `sprintf("%s",string(x))'.
+
+        s = Sprintf("%f is greater than %f but %s is better than %s\n",
+                    PI, E, "Cake" "Pie", 4);
+
+   The final argument to `Sprintf' is the number of items to format; in
+   this case, there are 4 items.
+
+ SEE ALSO
+   sprintf, string, sscanf
+--------------------------------------------------------------
+
+create_delimited_string
+
+ SYNOPSIS
+   Concatenate strings using a delimiter
+
+ USAGE
+   String_Type create_delimited_string (delim, s_1, s_2, ..., s_n, n)
+
+       String_Type delim, s_1, ..., s_n
+       Integer_Type n
+
+
+ DESCRIPTION
+   `create_delimited_string' performs a concatenation operation on
+   the `n' strings `s_1', ...,`s_n', using the string
+   `delim' as a delimiter.  The resulting string is equivalent to
+   one obtained via
+
+         s_1 + delim + s_2 + delim + ... + s_n
+
+
+ EXAMPLE
+   One use for this function is to construct path names, e.g.,
+
+       create_delimited_string ("/", "user", "local", "bin", 3);
+
+   will produce `"usr/local/bin"'.
+
+ NOTES
+   The expression `strcat(a,b)' is equivalent to
+   `create_delimited_string("", a, b, 2)'.
+
+ SEE ALSO
+   strjoin, is_list_element, extract_element, strchop, strcat
+--------------------------------------------------------------
+
+extract_element
+
+ SYNOPSIS
+   Extract the nth element of a string with delimiters
+
+ USAGE
+   String_Type extract_element (String_Type list, Integer_Type nth, Integer_Type delim);
+
+ DESCRIPTION
+   The `extract_element' function may be used to extract the
+   `nth' element of the `delim' delimited list of strings
+   `list'.  The function will return the `nth' element of the
+   list, unless `nth' specifies more elements than the list
+   contains, in which case `NULL' will be returned.
+   Elements in the list are numbered from `0'.
+
+ EXAMPLE
+   The expression
+
+        extract_element ("element 0, element 1, element 2", 1, ',')
+
+   returns the string `" element 1"', whereas
+
+        extract_element ("element 0, element 1, element 2", 1, ' ')
+
+   returns `"0,"'.
+   
+   The following function may be used to compute the number of elements
+   in the list:
+
+        define num_elements (list, delim)
+        {
+           variable nth = 0;
+           while (NULL != extract_element (list, nth, delim))
+             nth++;
+           return nth;
+        }
+
+   
+   Alternatively, the `strchop' function may be more useful.  In
+   fact, `extract_element' may be expressed in terms of the
+   function `strchop' as
+
+       define extract_element (list, nth, delim)
+       {
+          list = strchop(list, delim, 0);
+          if (nth >= length (list))
+            return NULL;
+          else
+            return list[nth];
+       }
+
+   and the `num_elements' function used above may be recoded more
+   simply as:
+
+       define num_elements (list, delim)
+       {
+          return length (strchop (length, delim, 0));
+       }
+
+
+ SEE ALSO
+   is_list_element, is_substr, strtok, strchop, create_delimited_string
+--------------------------------------------------------------
+
+is_list_element
+
+ SYNOPSIS
+   Test whether a delimited string contains a specific element
+
+ USAGE
+   Integer_Type is_list_element (String_Type list, String_Type elem, Integer_Type delim)
+
+ DESCRIPTION
+   The `is_list_element' function may be used to determine whether
+   or not a delimited list of strings, `list', contains the element
+   `elem'.  If `elem' is not an element of `list', the function
+   will return zero, otherwise, it returns 1 plus the matching element
+   number.
+
+ EXAMPLE
+   The expression
+
+        is_list_element ("element 0, element 1, element 2", "0,", ' ');
+
+   returns `2' since `"0,"' is element number one of the list
+   (numbered from zero).
+
+ SEE ALSO
+   extract_element, is_substr, create_delimited_string
+--------------------------------------------------------------
+
+is_substr
+
+ SYNOPSIS
+   Test for a specified substring within a string.
+
+ USAGE
+   Integer_Type is_substr (String_Type a, String_Type b)
+
+ DESCRIPTION
+   This function may be used to determine if `a' contains the
+   string `b'.  If it does not, the function returns 0; otherwise it
+   returns the position of the first occurance of `b' in `a'.
+
+ NOTES
+   It is important to remember that the first character of a string
+   corresponds to a position value of `1'.
+
+ SEE ALSO
+   substr, string_match, strreplace
+--------------------------------------------------------------
+
+make_printable_string
+
+ SYNOPSIS
+   Format a string suitable for parsing
+
+ USAGE
+   String_Type make_printable_string(String_Type str)
+
+ DESCRIPTION
+   This function formats a string in such a way that it may be used as
+   an argument to the `eval' function.  The resulting string is
+   identical to `str' except that it is enclosed in double quotes and the
+   backslash, newline, and double quote characters are expanded.
+
+ SEE ALSO
+   eval, str_quote_string
+--------------------------------------------------------------
+
+sprintf
+
+ SYNOPSIS
+   Format objects into a string
+
+ USAGE
+   String sprintf (String format, ...);
+
+ DESCRIPTION
+   This function performs a similar task as the C function with the same
+   name.  It differs from the S-Lang function `Sprintf' in that it
+   does not require the number of items to format.
+   See the documentation for `Sprintf' for more information.
+
+ SEE ALSO
+   Sprintf, string, sscanf, vmessage
+--------------------------------------------------------------
+
+sscanf
+
+ SYNOPSIS
+   Parse a formatted string
+
+ USAGE
+   Int_Type sscanf (s, fmt, r1, ... rN)
+
+       String_Type s, fmt;
+       Ref_Type r1, ..., rN
+
+
+ DESCRIPTION
+   The `sscanf' function parses the string `s' according to the
+   format `fmt' and sets the variables whose references are given by
+   `r1', ..., `rN'.  The function returns the number of
+   references assigned, or `-1' upon error.
+   
+   The format string `fmt' consists of ordinary characters and
+   conversion specifiers.  A conversion specifier begins with the
+   special character `%' and is described more fully below.  A white
+   space character in the format string matches any amount of whitespace
+   in the input string.  Parsing of the format string stops whenever a
+   match fails.
+   
+   The `%' is used to denote a conversion specifier whose general
+   form is given by `%[*][width][type]format' where the brackets
+   indicate optional items.  If `*' is present, then the conversion
+   will be performed by no assignment to a reference will be made.  The
+   `width' specifier specifies the maximum field width to use for
+   the conversion.  The `type' modifier is used to indicate size of
+   the object, e.g., a short integer, as follows. 
+   
+   If _type_ is given as the character `h', then if the format
+   conversion is for an integer (`dioux'), the object assigned will
+   be a short integer.  If _type_ is `l', then the conversion
+   will be to a long integer for integer conversions, or to a double
+   precession floating point number for floating point conversions.
+   
+   The format specifier is a character that specifies the conversion:
+
+          %     Matches a literal percent character.  No assigment is
+                performed.
+          d     Matches a signed decimal integer.
+          D     Matches a long decimal integer (equiv to `ld')
+          u     Matches an unsigned decimal integer
+          U     Matches an unsigned long decimal integer (equiv to `lu')
+          i     Matches either a hexidecimal integer, decimal integer, or 
+                octal integer.
+          I     Equivalent to `li'.
+          x     Matches a hexidecimal integer.
+          X     Matches a long hexidecimal integer (same as `lx').
+          e,f,g Matches a decimal floating point number (Float_Type).
+          E,F,G Matches a double precision floating point number, same as `lf'.
+          s     Matches a string of non-whitespace characters (String_Type).
+          c     Matches one character.  If width is given, width
+                characters are matched.
+          n     Assigns the number of characters scanned so far.
+          [...] Matches zero or more characters from the set of characters
+                enclosed by the square brackets.  If '^' is given as the
+                first character, then the complement set is matched. 
+
+
+ EXAMPLE
+   Suppose that `s' is `"Coffee: (3,4,12.4)"'.  Then
+
+       n = sscanf (s, "%[a-zA-Z]: (%d,%d,%lf)", &item, &x, &y, &z);
+
+   will set `n' to 4, `item' to `"Coffee"', `x' to 3,
+   `y' to 4, and `z' to the double precision number
+   `12.4'.  However,
+
+       n = sscanf (s, "%s: (%d,%d,%lf)", &item, &x, &y, &z);
+
+   will set `n' to 1, `item' to `"Coffee:"' and the
+   remaining variables will not be assigned.
+
+ SEE ALSO
+   sprintf, unpack, string, atof, int, integer, string_match
+--------------------------------------------------------------
+
+str_delete_chars
+
+ SYNOPSIS
+   Delete characters from a string
+
+ USAGE
+   String_Type str_delete_chars (String_Type str, String_Type del_set
+
+ DESCRIPTION
+   This function may be used to delete the set of characters specified
+   by `del_set' from the string `str'.  The result is returned.
+
+ EXAMPLE
+
+       str = str_delete_chars (str, "^A-Za-z");
+
+   will remove all characters except `A-Z' and `a-z' from
+   `str'.
+--------------------------------------------------------------
+
+str_quote_string
+
+ SYNOPSIS
+   Escape characters in a string.
+
+ USAGE
+   String_Type str_quote_string(String_Type str, String_Type qlis, Integer_Type quote)
+
+ DESCRIPTION
+   The `str_quote_string' returns a string identical to `str'
+   except that all characters in the set specified by the string
+   `qlis' are escaped with the `quote' character, including the
+   quote character itself.   This function is useful for making a
+   string that can be used in a regular expression.
+
+ EXAMPLE
+   Execution of the statements
+
+      node = "Is it [the coat] really worth $100?";
+      tag = str_quote_string (node, "\\^$[]*.+?", '\\');
+
+   will result in `tag' having the value:
+
+       Is it \[the coat\] really worth \$100\?
+
+
+ SEE ALSO
+   str_uncomment_string, make_printable_string
+--------------------------------------------------------------
+
+str_replace
+
+ SYNOPSIS
+   Replace a substring of a string
+
+ USAGE
+   Integer_Type str_replace (String_Type a, String_Type b, String_Type c)
+
+ DESCRIPTION
+   The `str_replace' function replaces the first occurance of `b' in
+   `a' with `c' and returns an integer that indicates whether a
+   replacement was made or not. If `b' does not occur in `a', zero is
+   returned.  However, if `b' occurs in `a', a non-zero integer is
+   returned as well as the new string resulting from the replacement.
+
+ NOTES
+   This function has been superceded by `strreplace'.
+
+ SEE ALSO
+   strreplace
+--------------------------------------------------------------
+
+str_uncomment_string
+
+ SYNOPSIS
+   Remove comments from a string
+
+ USAGE
+   String_Type str_uncomment_string(String_Type s, String_Type beg, String_Type end)
+
+ DESCRIPTION
+   This function may be used to remove comments from a string `s'.
+   The parameters, `beg' and `end', are strings of equal length
+   whose corresponding characters specify the begin and end comment
+   characters, respectively.  It returns the uncommented string.
+
+ EXAMPLE
+   The expression
+
+        str_uncomment_string ("Hello (testing) 'example' World", "'(", "')")
+
+   returns the string `"Hello   World"'.
+
+ NOTES
+   This routine does not handle multicharacter comment delimiters and it
+   assumes that comments are not nested.
+
+ SEE ALSO
+   str_quote_string
+--------------------------------------------------------------
+
+strcat
+
+ SYNOPSIS
+   Concatenate strings
+
+ USAGE
+   String_Type strcat (String_Type a_1, ...,  String_Type a_N)
+
+ DESCRIPTION
+   The `strcat' function concatenates its N `String_Type'
+   arguments `a_1', ... `a_N' together and returns the result.
+
+ EXAMPLE
+
+       strcat ("Hello", " ", "World");
+
+   produces the string `"Hello World"'.
+
+ NOTES
+   This function is equivalent to the binary operation `a_1+...+a_N'.
+   However, `strcat' is much faster making it the preferred method
+   to concatenate string.
+
+ SEE ALSO
+   sprintf, create_delimited_string
+--------------------------------------------------------------
+
+strchop
+
+ SYNOPSIS
+   Chop or split a string into substrings.
+
+ USAGE
+   String_Type[] strchop (String_Type str, Integer_Type delim, Integer_Type quote)
+
+ DESCRIPTION
+   The `strchop' function may be used to split-up a string
+   `str' that consists of substrings delimited by the character
+   specified by `delim'.  If the integer `quote' is non-zero,
+   it will be taken as a quote character for the delimiter.  The
+   function returns the substrings as an array.
+
+ EXAMPLE
+   The following function illustrates how to sort a comma separated
+   list of strings:
+
+        define sort_string_list (a)
+        { 
+           variable i, b, c;
+           b = strchop (a, ',', 0);
+           
+           i = array_sort (b, &strcmp);
+           b = b[i];   % rearrange
+           
+           % Convert array back into comma separated form
+           return strjoin (b, ",");
+        }
+
+
+ NOTES
+   The semantics of this `strchop' and `strchopr' have been
+   changed since version 1.2.x of the interpreter.  Old versions of
+   these functions returned the values on the stack, which meant that
+   one could not chop up arbitrarily long strings that consist of
+   many substrings.
+   
+   The function `strchopr' should be used if it is desired to have
+   the string chopped-up in the reverse order.
+
+ SEE ALSO
+   strchopr, extract_element, strjoin, strtok
+--------------------------------------------------------------
+
+strchopr
+
+ SYNOPSIS
+   Chop or split a string into substrings.
+
+ USAGE
+   String_Type[] strchopr (String_Type str, String_Type delim, String_Type quote)
+
+ DESCRIPTION
+   This routine performs exactly the same function as `strchop' except
+   that it returns the substrings in the reverse order.  See the
+   documentation for `strchop' for more information.
+
+ SEE ALSO
+   strchop, extract_element, strtok, strjoin
+--------------------------------------------------------------
+
+strcmp
+
+ SYNOPSIS
+   Compare two strings
+
+ USAGE
+   Interpret strcmp (String_Type a, String_Type b)
+
+ DESCRIPTION
+   The `strcmp' function may be used to perform a case-sensitive
+   string comparison, in the lexicongraphic sense, on strings `a' and
+   `b'.  It returns 0 if the strings are identical, a negative integer
+   if `a' is less than `b', or a positive integer if `a' is greater
+   than `b'.
+
+ EXAMPLE
+   The `strup' function may be used to perform a case-insensitive
+   string comparison:
+
+       define case_insensitive_strcmp (a, b)
+       {
+         return strcmp (strup(a), strup(b));
+       }
+
+
+ NOTES
+   One may also use one of the binary comparison operators, e.g.,
+   `a > b'.
+
+ SEE ALSO
+   strup, strncmp
+--------------------------------------------------------------
+
+strcompress
+
+ SYNOPSIS
+   Remove excess whitespace characters from a string
+
+ USAGE
+   String_Type strcompress (String_Type s, String_Type white)
+
+ DESCRIPTION
+   The `strcompress' function compresses the string `s' by
+   replacing a sequence of one or more characters from the set
+   `white' by the first character of `white'. In addition, it
+   also removes all leading and trailing characters from `s' that
+   are part of `white'.
+
+ EXAMPLE
+   The expression
+
+       strcompress (",;apple,,cherry;,banana", ",;");
+
+   returns the string `"apple,cherry,banana"'.
+
+ SEE ALSO
+   strtrim, strtrans
+--------------------------------------------------------------
+
+string_match
+
+ SYNOPSIS
+   Match a string against a regular expression
+
+ USAGE
+   Integer_Type string_match(String_Type str, String_Type pat, Integer_Type pos)
+
+ DESCRIPTION
+   The `string_match' function returns zero if `str' does not
+   match regular expression specified by `pat'.  This function
+   performs the match starting at position `pos' (numbered from 1) in
+   `str'.  This function returns the position of the start of the
+   match.  To find the exact substring actually matched, use
+   `string_match_nth'.
+
+ SEE ALSO
+   string_match_nth, strcmp, strncmp
+--------------------------------------------------------------
+
+string_match_nth
+
+ SYNOPSIS
+   Get the result of the last call to string_match
+
+ USAGE
+   (Integer_Type, Integer_Type) = string_match_nth(Integer_Type nth)
+
+ DESCRIPTION
+   The `string_match_nth' function returns two integers describing
+   the result of the last call to `string_match'.  It returns both
+   the offset into the string and the length of characters matches by
+   the `nth' submatch.
+   
+   By convention, `nth' equal to zero means the entire match.
+   Otherwise, `nth' must be an integer with a value 1 through 9,
+   and refers to the set of characters matched by the `nth' regular
+   expression enclosed by the pairs `\(, \)'.
+
+ EXAMPLE
+   Consider:
+
+        variable matched, pos, len;
+        matched = string_match("hello world", "\\([a-z]+\\) \\([a-z]+\\)", 1);
+        if (matched) (pos, len) = string_match_nth(2);
+
+   This will set `matched' to 1 since a match will be found at the
+   first position, `pos' to 6 since `w' is offset 6 characters
+   from the beginning of the string, and `len' to 5 since
+   `"world"' is 5 characters long.
+
+ NOTES
+   The position offset is _not_ affected by the value of the offset
+   parameter to the `string_match' function. For example, if the
+   value of the last parameter to the `string_match' function had
+   been 3, `pos' would still have been set to 6.
+   
+   Note also that `string_match_nth' returns the _offset_ from
+   the beginning of the string and not the position of the match.
+
+ SEE ALSO
+   string_match
+--------------------------------------------------------------
+
+strjoin
+
+ SYNOPSIS
+   Concatenate elements of a string array
+
+ USAGE
+   String_Type strjoin (Array_Type a, String_Type delim)
+
+ DESCRIPTION
+   The `strjoin' function operates on an array of strings by joining
+   successive elements together separated with a delimiter `delim'.
+   If `delim' is the empty string `""', then the result will
+   simply be the concatenation of the elements.
+
+ EXAMPLE
+   Suppose that
+
+         days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+   Then `strjoin (days,"+")' will produce
+   `"Sun+Mon+Tue+Wed+Thu+Fri+Sat+Sun"'.  Similarly,
+   `strjoin (["","",""], "X")' will produce `"XX"'.
+
+ SEE ALSO
+   create_delimited_string, strchop, strcat
+--------------------------------------------------------------
+
+strlen
+
+ SYNOPSIS
+   Compute the length of a string
+
+ USAGE
+   Integer_Type strlen (String_Type a)
+
+ DESCRIPTION
+   The `strlen' function may be used to compute the length of a string.
+
+ EXAMPLE
+   After execution of
+
+      variable len = strlen ("hello");
+
+   `len' will have a value of `5'.
+
+ SEE ALSO
+   bstrlen, length, substr
+--------------------------------------------------------------
+
+strlow
+
+ SYNOPSIS
+   Convert a string to lowercase
+
+ USAGE
+   String_Type strlow (String_Type s)
+
+ DESCRIPTION
+   The `strlow' function takes a string `s' and returns another
+   string identical to `s' except that all upper case characters
+   that comprise `s' will be converted to lower case.
+
+ EXAMPLE
+   The function
+
+       define Strcmp (a, b)
+       {
+         return strcmp (strlow (a), strlow (b));
+       }
+
+   performs a case-insensitive comparison operation of two strings by
+   converting them to lower case first.
+
+ SEE ALSO
+   strup, tolower, strcmp, strtrim, define_case
+--------------------------------------------------------------
+
+strncmp
+
+ SYNOPSIS
+   Compare the first few characters of two strings
+
+ USAGE
+   Integer_Type strncmp (String_Type a, String_Type b, Integer_Type n)
+
+ DESCRIPTION
+   This function behaves like `strcmp' except that it compares only the
+   first `n' characters in the strings `a' and `b'.  See
+   the documentation for `strcmp' for information about the return
+   value.
+
+ EXAMPLE
+   The expression
+
+        strcmp ("apple", "appliance", 3);
+
+   will return zero since the first three characters match.
+
+ SEE ALSO
+   strcmp, strlen
+--------------------------------------------------------------
+
+strreplace
+
+ SYNOPSIS
+   Replace one or more substrings
+
+ USAGE
+   (new, n) = strreplace (a, b, c, max_n)
+
+      String_Type a, b, c, rep;
+      Int_Type n, max_n;
+
+
+ DESCRIPTION
+   The `strreplace' function may be used to replace one or more
+   occurances of `b' in `a' with `c'.  If the integer
+   `max_n' is positive, then the first `max_n' occurances of
+   `b' in `a' will be replaced.  Otherwise, if `max_n' is
+   negative, then the last `abs(max_n)' occurances will be replaced.
+   
+   The function returns the resulting string and an integer indicating
+   how many replacements were made.
+
+ EXAMPLE
+   The following function illustrates how `strreplace' may be used
+   to remove all occurances of a specified substring
+
+     define delete_substrings (a, b)
+     {
+        (a, ) = strreplace (a, b, "", strlen (a));
+        return a;
+     }
+
+
+ SEE ALSO
+   is_substr, strsub, strtrim, strtrans, str_delete_chars
+--------------------------------------------------------------
+
+strsub
+
+ SYNOPSIS
+   Replace a character with another in a string.
+
+ USAGE
+   String_Type strsub (String_Type s, Integer_Type pos, Integer_Type ch)
+
+ DESCRIPTION
+   The `strsub' character may be used to substitute the character
+   `ch' for the character at position `pos' of the string
+   `s'.  The resulting string is returned.
+
+ EXAMPLE
+
+       define replace_spaces_with_comma (s)
+       {
+         variable n;
+         while (n = is_substr (s, " "), n) s = strsub (s, n, ',');
+         return s;
+       }
+
+   For uses such as this, the `strtrans' function is a better choice.
+
+ NOTES
+   The first character in the string `s' is specified by `pos'
+   equal to 1.
+
+ SEE ALSO
+   is_substr, strreplace, strlen
+--------------------------------------------------------------
+
+strtok
+
+ SYNOPSIS
+   Extract tokens from a string
+
+ USAGE
+   String_Type[] strtok (String_Type str [,String_Type white])
+
+ DESCRIPTION
+   `strtok' breaks the string `str' into a series of tokens and
+   returns them as an array of strings.  If the second parameter
+   `white' is present, then it specifies the set of characters that
+   are to be regarded as whitespace when extracting the tokens, and may
+   consist of the whitespace characters or a range of such characters.
+   If the first character of `white' is `'^'', then the
+   whitespace characters consist of all characters except those in
+   `white'. For example, if `white' is `" \t\n,;."',
+   then those characters specifiy the whitespace characters.  However,
+   if `white' is given by `"^a-zA-Z0-9_"', then any character
+   is a whitespace character except those in the ranges `a-z',
+   `A-Z', `0-9', and the underscore character.
+   
+   If the second parameter is not present, then it defaults to 
+   `" \t\r\n\f"'.
+
+ EXAMPLE
+   The following example may be used to count the words in a text file:
+
+       define count_words (file)
+       {
+          variable fp, line, count;
+          
+          fp = fopen (file, "r");
+          if (fp == NULL) return -1;
+          
+          count = 0;
+          while (-1 != fgets (&line, fp))
+            {
+              line = strtok (line, "^a-zA-Z");
+              count += length (line);
+            }
+          () = fclose (fp);
+          return count;
+       }
+
+
+ SEE ALSO
+   strchop, strcompress, extract_element, strjoin
+--------------------------------------------------------------
+
+strtrans
+
+ SYNOPSIS
+   Replace characters in a string
+
+ USAGE
+   String_Type strtrans (str, old_set, new_set)
+
+      String_Type str, old_set, new_set;
+
+
+ DESCRIPTION
+   The `strtrans' function may be used to replace all the characters
+   from the set `old_set' with the corresponding characters from
+   `new_set' in the string `str'.  If `new_set' is empty,
+   then the characters in `old_set' will be removed from `str'.
+   This function returns the result.
+
+ EXAMPLE
+
+       str = strtrans (str, "A-Z", "a-z");   % lower-case str
+       str = strtrans (str, "^0-9", " ");    % Replace anything but 0-9 by space
+
+
+ SEE ALSO
+   strreplace, strtrim, strup, strlow
+--------------------------------------------------------------
+
+strtrim
+
+ SYNOPSIS
+   Remove whitespace from the ends of a string
+
+ USAGE
+   String_Type strtrim (String_Type s [,String_Type w])
+
+ DESCRIPTION
+   The `strtrim' function removes all leading and trailing whitespace
+   characters from the string `s' and returns the result.  The
+   optional second parameter specifies the set of whitespace
+   characters.  If the argument is not present, then the set defaults
+   to `" \t\r\n"'.
+
+ SEE ALSO
+   strtrim_beg, strtrim_end, strcompress
+--------------------------------------------------------------
+
+strtrim_beg
+
+ SYNOPSIS
+   Remove leading whitespace from a string
+
+ USAGE
+   String_Type strtrim_beg (String_Type s [,String_Type w])
+
+ DESCRIPTION
+   The `strtrim_beg' function removes all leading whitespace
+   characters from the string `s' and returns the result.  The
+   optional second parameter specifies the set of whitespace
+   characters.  If the argument is not present, then the set defaults
+   to `" \t\r\n"'.
+
+ SEE ALSO
+   strtrim, strtrim_end, strcompress
+--------------------------------------------------------------
+
+strtrim_end
+
+ SYNOPSIS
+   Remove trailing whitespace from a string
+
+ USAGE
+   String_Type strtrim_end (String_Type s [,String_Type w])
+
+ DESCRIPTION
+   The `strtrim_end' function removes all trailing whitespace
+   characters from the string `s' and returns the result.  The
+   optional second parameter specifies the set of whitespace
+   characters.  If the argument is not present, then the set defaults
+   to `" \t\r\n"'.
+
+ SEE ALSO
+   strtrim, strtrim_beg, strcompress
+--------------------------------------------------------------
+
+strup
+
+ SYNOPSIS
+   Convert a string to uppercase
+
+ USAGE
+   String_Type strup (String_Type s)
+
+ DESCRIPTION
+   The `strup' function takes a string `s' and returns another
+   string identical to `s' except that all lower case characters
+   that comprise `s' will be converted to upper case.
+
+ EXAMPLE
+   The function
+
+       define Strcmp (a, b)
+       {
+         return strcmp (strup (a), strup (b));
+       }
+
+   performs a case-insensitive comparison operation of two strings by
+   converting them to upper case first.
+
+ SEE ALSO
+   strlow, toupper, strcmp, strtrim, define_case, strtrans
+--------------------------------------------------------------
+
+substr
+
+ SYNOPSIS
+   Extract a substring from a string
+
+ USAGE
+   String_Type substr (String_Type s, Integer_Type n, Integer_Type len)
+
+ DESCRIPTION
+   The `substr' function returns a substring with length `len'
+   of the string `s' beginning at position `n'.  If `len' is
+   `-1', the entire length of the string `s' will be used for
+   `len'.  The first character of `s' is given by `n' equal
+   to 1.
+
+ EXAMPLE
+
+        substr ("To be or not to be", 7, 5);
+
+   returns `"or no"'
+
+ NOTES
+   In many cases it is more convenient to use array indexing rather
+   than the `substr' function.  In fact, `substr(s,i+1,strlen(s))' is
+   equivalent to `s[[i:]]'.
+
+ SEE ALSO
+   is_substr, strlen
+--------------------------------------------------------------
+
+_push_struct_field_values
+
+ SYNOPSIS
+   Push the values of a structure's fields onto the stack
+
+ USAGE
+   Integer_Type num = _push_struct_field_values (Struct_Type s)
+
+ DESCRIPTION
+   The `_push_struct_field_values' function pushes the values of
+   all the fields of a structure onto the stack, returning the
+   number of items pushed.  The fields are pushed such that the last
+   field of the structure is pushed first.
+
+ SEE ALSO
+   get_struct_field_names, get_struct_field
+--------------------------------------------------------------
+
+get_struct_field
+
+ SYNOPSIS
+   Get the value associated with a structure field
+
+ USAGE
+   x = get_struct_field (Struct_Type s, String field_name)
+
+ DESCRIPTION
+   The `get_struct_field' function gets the value of the field
+   whose name is specified by `field_name' of the structure `s'.
+
+ EXAMPLE
+   The following example illustrates how this function may be used to 
+   to print the value of a structure.
+
+         define print_struct (s)
+         {
+            variable name;
+   
+            foreach (get_struct_field_names (s))
+              {
+                name = ();
+                value = get_struct_field (s, name);
+                vmessage ("s.%s = %s\n", name, string(value));
+              }
+         }
+
+
+ SEE ALSO
+   set_struct_field, get_struct_field_names, array_info
+--------------------------------------------------------------
+
+get_struct_field_names
+
+ SYNOPSIS
+   Retrieve the field names associated with a structure
+
+ USAGE
+   String_Type[] = get_struct_field_names (Struct_Type s)
+
+ DESCRIPTION
+   The `get_struct_field_names' function returns an array of
+   strings whose elements specify the names of the fields of the
+   struct `s'.
+
+ EXAMPLE
+   The following example illustrates how the
+   `get_struct_field_names' function may be used to print the
+   value of a structure.
+
+         define print_struct (s)
+         {
+            variable name, value;
+   
+            foreach (get_struct_field_names (s))
+              {
+                name = ();
+                value = get_struct_field (s, name);
+                vmessage ("s.%s = %s\n", name, string (value));
+              }
+         }
+
+
+ SEE ALSO
+   _push_struct_field_values, get_struct_field
+--------------------------------------------------------------
+
+is_struct_type
+
+ SYNOPSIS
+   Determine whether or not an object is a structure
+
+ USAGE
+   Integer_Type is_struct_type (X)
+
+ DESCRIPTION
+   The `is_struct_type' function returns 1 if the parameter
+   refers to a structure or a user-defined type.  If the object is
+   neither, 0 will be returned.
+
+ SEE ALSO
+   typeof, _typeof
+--------------------------------------------------------------
+
+set_struct_field
+
+ SYNOPSIS
+   Set the value associated with a structure field
+
+ USAGE
+   set_struct_field (s, field_name, field_value)
+
+      Struct_Type s;
+      String_Type field_name;
+      Generic_Type field_value;
+
+
+ DESCRIPTION
+   The `set_struct_field' function sets the value of the field
+   whose name is specified by `field_name' of the structure
+   `s' to `field_value'.
+
+ SEE ALSO
+   get_struct_field, get_struct_field_names, set_struct_fields, array_info
+--------------------------------------------------------------
+
+set_struct_fields
+
+ SYNOPSIS
+   Set the fields of a structure
+
+ USAGE
+   set_struct_fields (Struct_Type s, ...)
+
+ DESCRIPTION
+   The `set_struct_fields' function may be used to set zero or more
+   fields of a structure.  The fields are set in the order in which
+   they were created when the structure was defined.
+
+ EXAMPLE
+
+       variable s = struct { name, age, height };
+       set_struct_fields (s, "Bill", 13, 64);
+
+
+ SEE ALSO
+   set_struct_field, get_struct_field_names
+--------------------------------------------------------------
+
+_time
+
+ SYNOPSIS
+   Get the current time in seconds
+
+ USAGE
+   ULong_Type _time ()
+
+ DESCRIPTION
+   The `_time' function returns the number of elapsed seconds since
+   00:00:00 GMT, January 1, 1970.  The `ctime' function may be used
+   to convert this into a string representation.
+
+ SEE ALSO
+   ctime, time, localtime, gmtime
+--------------------------------------------------------------
+
+ctime
+
+ SYNOPSIS
+   Convert a calendar time to a string
+
+ USAGE
+   String_Type ctime(ULong_Type secs)
+
+ DESCRIPTION
+   This function returns a string representation of the time as given
+   by `secs' seconds since 1970.
+
+ SEE ALSO
+   time, _time, localtime, gmtime
+--------------------------------------------------------------
+
+gmtime
+
+ SYNOPSIS
+   Break down a time in seconds to GMT timezone
+
+ USAGE
+   Struct_Type gmtime (Long_Type secs)
+
+ DESCRIPTION
+   The `gmtime' function is exactly like `localtime' except
+   that the values in the structure it returns are with respect to GMT
+   instead of the local timezone.  See the documentation for
+   `localtime' for more information.
+
+ NOTES
+   On systems that do not support the `gmtime' C library function,
+   this function is the same as `localtime'.
+
+ SEE ALSO
+   localtime, _time
+--------------------------------------------------------------
+
+localtime
+
+ SYNOPSIS
+   Break down a time in seconds to local timezone
+
+ USAGE
+   Struct_Type localtime (Long_Type secs)
+
+ DESCRIPTION
+   The `localtime' function takes a parameter `secs'
+   representing the number of seconds since 00:00:00, January 1 1970
+   UTC and returns a structure containing information about `secs'
+   in the local timezone.  The structure contains the following
+   `Int_Type' fields:
+   
+   `tm_sec' The number of seconds after the minute, normally
+      in the range 0 to 59, but can be up to 61 to allow for
+      leap seconds.
+   
+   `tm_min' The number of minutes after the hour, in the
+      range 0 to 59.
+   
+   `tm_hour' The number of hours past midnight, in the range
+      0 to 23.
+   
+   `tm_mday' The day of the month, in the range 1 to 31.
+   
+   `tm_mon' The number of months since January, in the range
+      0 to 11.
+   
+   `tm_year' The number of years since 1900.
+   
+   `tm_wday' The number of days since Sunday, in the range 0
+      to 6.
+   
+   `tm_yday' The number of days since January 1, in the
+      range 0 to 365.
+   
+   `tm_isdst' A flag that indicates whether daylight saving
+      time is in effect at the time described.  The value is
+      positive if daylight saving time is in effect, zero if it
+      is not, and negative if the information is not available.
+
+ SEE ALSO
+   gmtime, _time, ctime
+--------------------------------------------------------------
+
+tic
+
+ SYNOPSIS
+   Start timing
+
+ USAGE
+   void tic ()
+
+ DESCRIPTION
+   The `tic' function restarts the internal clock used for timing
+   the execution of commands.  To get the elapsed time of the clock,
+   use the `toc' function.
+
+ SEE ALSO
+   toc, times
+--------------------------------------------------------------
+
+time
+
+ SYNOPSIS
+   Return the current data and time as a string
+
+ USAGE
+   String_Type time ()
+
+ DESCRIPTION
+   This function returns the current time as a string of the form:
+
+       Sun Apr 21 13:34:17 1996
+
+
+ SEE ALSO
+   ctime, message, substr
+--------------------------------------------------------------
+
+times
+
+ SYNOPSIS
+   Get process times
+
+ USAGE
+   Struct_Type times ()
+
+ DESCRIPTION
+   The `times' function returns a structure containing the
+   following fields:
+
+       tms_utime     (user time)
+       tms_stime     (system time)
+       tms_cutime    (user time of child processes)
+       tms_cstime    (system time of child processes)
+
+
+ NOTES
+   Not all systems support this function.
+
+ SEE ALSO
+   tic, toc, _times
+--------------------------------------------------------------
+
+toc
+
+ SYNOPSIS
+   Get elapsed CPU time
+
+ USAGE
+   Double_Type toc ()
+
+ DESCRIPTION
+   The `toc' function returns the elapsed CPU time in seconds since
+   the last call to `tic'.  The CPU time is the amount of time the
+   CPU spent running the code of the current process.
+
+ EXAMPLE
+   The `tic' and `toc' functions are ideal for timing the
+   execution of the interpreter:
+
+        variable a = "hello", b = "world", c, n = 100000, t;
+        
+        tic ();  loop (n) c = a + b; t = toc ();
+        vmessage ("a+b took %f seconds\n", t);
+        tic ();  loop (n) c = strcat(a,b); t = toc ();
+        vmessage ("strcat took %f seconds\n", t);
+
+
+ NOTES
+   This function may not be available on all systems.
+   
+   The implementation of this function is based upon the `times'
+   system call.  The precision of the clock is system dependent.
+
+ SEE ALSO
+   tic, times, _time
+--------------------------------------------------------------
+
+_slang_guess_type
+
+ SYNOPSIS
+   Guess the data type that a string represents.
+
+ USAGE
+   DataType_Type _slang_guess_type (String_Type s)
+
+ DESCRIPTION
+   This function tries to determine whether its argument `s'
+   represents an integer (short, int, long), floating point (float,
+   double), or a complex number.  If it appears to be none of these,
+   then a string is assumed.  It returns one of the following values
+   depending on the format of the string `s':
+
+       Short_Type     :  short integer           (e.g., "2h")
+       UShort_Type    :  unsigned short integer  (e.g., "2hu")
+       Integer_Type   :  integer                 (e.g., "2")
+       UInteger_Type  :  unsigned integer        (e.g., "2")
+       Long_Type      :  long integer            (e.g., "2l")
+       ULong_Type     :  unsigned long integer   (e.g., "2l")
+       Float_Type     :  float                   (e.g., "2.0f")
+       Double_Type    :  double                  (e.g., "2.0")
+       Complex_Type   :  imaginary               (e.g., "2i")
+       String_Type    :  Anything else.          (e.g., "2foo")
+
+   For example, `_slang_guess_type("1e2")' returns
+   `Double_Type' but `_slang_guess_type("e12")' returns
+   `String_Type'.
+
+ SEE ALSO
+   integer, string, double, atof
+--------------------------------------------------------------
+
+_typeof
+
+ SYNOPSIS
+   Get the data type of an object
+
+ USAGE
+   DataType_Type _typeof (x)
+
+ DESCRIPTION
+   This function is similar to the `typeof' function except in the
+   case of arrays.  If the object `x' is an array, then the data
+   type of the array will be returned. otherwise `_typeof' returns
+   the data type of `x'. 
+
+ EXAMPLE
+
+     if (Integer_Type == _typeof (x)) 
+       message ("x is an integer or an integer array");
+
+
+ SEE ALSO
+   typeof, array_info, _slang_guess_type, typecast
+--------------------------------------------------------------
+
+atof
+
+ SYNOPSIS
+   Convert a string to a double precision number
+
+ USAGE
+   Double_Type atof (String_Type s)
+
+ DESCRIPTION
+   This function converts a string `s' to a double precision value
+   and returns the result.  It performs no error checking on the format
+   of the string.  The function `_slang_guess_type' may be used to
+   check the syntax of the string.
+
+ EXAMPLE
+
+        define error_checked_atof (s)
+        {
+           switch (_slang_guess_type (s))
+           {
+              case Double_Type:
+                return atof (s);
+           }
+           {
+              case Integer_Type:
+                return double (integer (s));
+           }
+   
+           verror ("%s is not a double", s);
+       }
+
+
+ SEE ALSO
+   typecast, double, _slang_guess_type
+--------------------------------------------------------------
+
+char
+
+ SYNOPSIS
+   Convert an ascii value into a string
+
+ USAGE
+   String_Type char (Integer_Type c)
+
+ DESCRIPTION
+   The `char' function converts an integer ascii value `c' to a string
+   of unit length such that the first character of the string is `c'.
+   For example, `char('a')' returns the string `"a"'.
+
+ SEE ALSO
+   integer, string, typedef
+--------------------------------------------------------------
+
+define_case
+
+ SYNOPSIS
+   Define upper-lower case conversion.
+
+ USAGE
+   define_case (Integer_Type ch_up, Integer_Type ch_low);
+
+ DESCRIPTION
+   This function defines an upper and lowercase relationship between two
+   characters specified by the arguments.  This relationship is used by
+   routines which perform uppercase and lowercase conversions.
+   The first integer `ch_up' is the ascii value of the uppercase character
+   and the second parameter `ch_low' is the ascii value of its
+   lowercase counterpart.
+
+ SEE ALSO
+   strlow, strup
+--------------------------------------------------------------
+
+double
+
+ SYNOPSIS
+   Convert an object to double precision
+
+ USAGE
+   result = double (x)
+
+ DESCRIPTION
+   The `double' function typecasts an object `x' to double
+   precision.  For example, if `x' is an array of integers, an
+   array of double types will be returned.  If an object cannot be
+   converted to `Double_Type', a type-mismatch error will result.
+
+ NOTES
+   The `double' function is equivalent to the typecast operation
+
+        typecast (x, Double_Type)
+
+   To convert a string to a double precision number, use the `atof'
+   function.
+
+ SEE ALSO
+   typecast, atof, int
+--------------------------------------------------------------
+
+int
+
+ SYNOPSIS
+   Typecast an object to an integer
+
+ USAGE
+   int (s)
+
+ DESCRIPTION
+   This function performs a typecast of `s' from its data type to
+   an object of `Integer_Type'.  If `s' is a string, it returns
+   returns the ascii value of the first character of the string
+   `s'.  If `s' is `Double_Type', `int' truncates the
+   number to an integer and returns it.
+
+ EXAMPLE
+   `int' can be used to convert single character strings to
+   integers.  As an example, the intrinsic function `isdigit' may
+   be defined as
+
+       define isdigit (s)
+       {
+         if ((int (s) >= '0') and (int (s) <= '9')) return 1;
+         return 0;
+       }
+
+
+ NOTES
+   This function is equalent to `typecast (s, Integer_Type)';
+
+ SEE ALSO
+   typecast, double, integer, char, isdigit
+--------------------------------------------------------------
+
+integer
+
+ SYNOPSIS
+   Convert a string to an integer
+
+ USAGE
+   Integer_Type integer (String_Type s)
+
+ DESCRIPTION
+   The `integer' function converts a string representation of an
+   integer back to an integer.  If the string does not form a valid
+   integer, a type-mismatch error will be generated.
+
+ EXAMPLE
+   `integer ("1234")' returns the integer value `1234'.
+
+ NOTES
+   This function operates only on strings and is not the same as the
+   more general `typecast' operator.
+
+ SEE ALSO
+   typecast, _slang_guess_type, string, sprintf, char
+--------------------------------------------------------------
+
+isdigit
+
+ SYNOPSIS
+   Tests for a decimal digit character
+
+ USAGE
+   Integer_Type isdigit (String_Type s)
+
+ DESCRIPTION
+   This function returns a non-zero value if the first character in the
+   string `s' is a digit; otherwise, it returns zero.
+
+ EXAMPLE
+   A simple, user defined implementation of `isdigit' is
+
+       define isdigit (s)
+       {
+          return ((s[0] <= '9') and (s[0]  >= '0'));
+       }
+
+   However, the intrinsic function `isdigit' executes many times faster
+   than the equivalent representation defined above.
+
+ NOTES
+   Unlike the C function with the same name, the S-Lang function takes
+   a string argument.
+
+ SEE ALSO
+   int, integer
+--------------------------------------------------------------
+
+string
+
+ SYNOPSIS
+   Convert an object to a string representation.
+
+ USAGE
+   Integer_Type string (obj)
+
+ DESCRIPTION
+   The `string' function may be used to convert an object
+   `obj' of any type to a string representation.
+   For example, `string(12.34)' returns `"12.34"'.
+
+ EXAMPLE
+
+        define print_anything (anything)
+        {
+           message (string (anything));
+        }
+
+
+ NOTES
+   This function is _not_ the same as typecasting to a `String_Type'
+   using the `typecast' function.
+
+ SEE ALSO
+   typecast, sprintf, integer, char
+--------------------------------------------------------------
+
+tolower
+
+ SYNOPSIS
+   Convert a character to lowercase.
+
+ USAGE
+   Integer_Type lower (Integer_Type ch)
+
+ DESCRIPTION
+   This function takes an integer `ch' and returns its lowercase
+   equivalent.
+
+ SEE ALSO
+   toupper, strup, strlow, int, char, define_case
+--------------------------------------------------------------
+
+toupper
+
+ SYNOPSIS
+   Convert a character to uppercase.
+
+ USAGE
+   Integer_Type toupper (Integer_Type ch)
+
+ DESCRIPTION
+   This function takes an integer `ch' and returns its uppercase
+   equivalent.
+
+ SEE ALSO
+   tolower, strup, strlow, int, char, define_case
+--------------------------------------------------------------
+
+typecast
+
+ SYNOPSIS
+   Convert an object from one data type to another.
+
+ USAGE
+   typecast (x, new_type)
+
+ DESCRIPTION
+   The `typecast' function performs a generic typecast operation on
+   `x' to convert it to `new_type'.  If `x' represents an
+   array, the function will attempt to convert all elements of `x'
+   to `new_type'.  Not all objects can be converted and a
+   type-mismatch error will result upon failure.
+
+ EXAMPLE
+
+       define to_complex (x)
+       {
+          return typecast (x, Complex_Type);
+       }
+
+   defines a function that converts its argument, `x' to a complex
+   number.
+
+ SEE ALSO
+   int, double, typeof
+--------------------------------------------------------------
+
+typeof
+
+ SYNOPSIS
+   Get the data type of an object.
+
+ USAGE
+   DataType_Type typeof (x)
+
+ DESCRIPTION
+   This function returns the data type of `x'.
+
+ EXAMPLE
+
+     if (Integer_Type == typeof (x)) message ("x is an integer");
+
+
+ SEE ALSO
+   _typeof, is_struct_type, array_info, _slang_guess_type, typecast
+--------------------------------------------------------------
+

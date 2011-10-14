@@ -1,0 +1,1505 @@
+Changes since 1.4.8
+1. src/slarray.c: superfluous call to SLclass_add_math_op removed
+   (Michael Noble <mnoble at space.mit.edu>)
+2. src/slang.c: foreach (NULL) using("next"){} foo (); caused _NARGS=1
+   in foo.
+3. src/slarrfunc.c: Fix to prevent sum(NULL) from causing a core-dump.
+4. src/slimport.c: import (module, "") made equivalent to
+   import(module,"Global");  This way, import(module, current_namespace())
+   will work when the current namespace is anonymous.
+5. src/slospath.c: Several users have requested that I add the ability
+   to define a load path and use that path when loading interpreter
+   files.  To this end, several new functions were added to the API:
+   
+       char *SLpath_get_load_path (void);
+       int SLpath_set_load_path (char *path);
+         /* Get and Set the path to be searched for files */
+       int SLpath_get_path_delimiter (void);
+       SLpath_set_path_delimiter (int delimiter);
+         /* Get and set the character delimiter for search paths */
+       int SLang_load_file_verbose (int verbose);
+         /* if non-zero, display file loading messages */
+   
+   New intrinsics include:
+
+       set_slang_load_path
+       get_slang_load_path
+       path_get_delimiter
+       
+   These functions, nor the intrinsics have an effect on applications
+   that use SLang_load_file_hook or SLns_load_file_hook for loading
+   files.  The change should be transparant to applications that use
+   the stock load file mechanism.  The main difference is that if one
+   attempts to load a file with no extension, e.g., "foo", but the
+   file does not exist, then the interpreter will try to load the more
+   recent of "foo.sl" and "foo.slc".
+   
+   See src/slsh.c for how the functions may be used.
+
+6. slsh/slsh.c: Updated to use the new search path code outlined
+   above.  Also, slsh is distributed with a collection of general
+   purpose slang functions, including jed's provide/require functions.
+   See slsh/README for more information.
+7. doc/tm/cslang.tm: Modified the section describing the implemetation
+   of intrinsic functions in an effort to clarify the discussion.
+8. src/slang.c: tiny memory leak resulting from peephole optimzations
+   added earlier found and fixed.
+9. src/slarrmisc.c: new intrinsic: cumsum computes the cumulative sum
+   of an array via the new SLarray_map_array function.
+
+Changes since 1.4.7
+1. src/sldisply.c: make sure SLtt_erase_line leaves the cursor at the
+   beginning of a line in all cases.  Previously, this happened only
+   for terminals able to delete to the end of line _and_, when
+   writing to the last line, the ability to insert a character.
+2. doc/tm/cslang.tm: In the discussion of the MAKE_CSTRUCT_FIELD
+   macro, SLANG_STRING_TYPE was used instead of SLANG_INT_TYPE
+   (mnoble@space.mit.edu).  Similarly, in the discussion of intrinsic
+   structures, My_Window was used instead of My_Win
+   dburke@head-cfa.cfa.harvard.edu.
+3. src/slang.c: peephole optimizations of 1.4.7 were conflicting with __tmp
+   optimizations.  This was causing something as simple as
+   
+       define f() 
+       { 
+          variable a = [1.0:10.0:1]; 
+	  variable b = a * 0.0;
+	  return a;
+       }
+   
+    to fail.
+4. src/slarray.c Allow ranges to index higher dimensional array.
+5. slsh/slsh.c: Updated to allow a user specified search path.  See
+   slsh/README for more info.
+
+Changes since 1.4.6
+1. src/slclass.c: Change "-??-" to "- ?? -" to avoid its
+   interpretation as a trigraph. Miquel Garriga <miquel at icmab.es>
+2. src/mkfiles/makefile.all: If compiling with mingw32, use "cp"
+   instead of "copy". Miquel Garriga <miquel at icmab.es>
+3. src/sllimits.h: Increased the size of the local variable and
+   recursion stacks on 32 bit systems.
+4. src/slarrfun.c: "sum", "min", and "max" intrinsic functions added.
+   Since these may conflict with application defined function, they
+   have been placed in their own module.  To get them, use
+   SLang_init_array_extra --- SLang_init_all will not pick up this
+   module.  Version 2 of the library will add these functions to the
+   main array function module.
+5. src/sltermin.c: Work around a bug in the solaris 7+8 tset program
+   which improperly sets the TERMCAP environment variable
+   (Paananen Mikko <mikkopa@cs.tut.fi>).
+6. src/slprep.c: Added support for "#stop" and a few other useful
+   or convenient features.  See comments at the top of slprep.c for
+   more details. (Mark Olesen <molesen@zeunastaerker.de>).
+7. src/<misc>.c: "const" qualifier added to several places to put
+   constant variables in rdata/text segment to be shared between
+   other processes. ("Andrew V. Samoilov" <samoilov@usb.zp.ua>)
+8. src/sldisply.c: If colors were defined using the "Sf" capability
+   instead of the "AF" capability, then assume those are specified in
+   BGR format instead of RGB. (Pavel Roskin <proski@gnu.org>)
+9. slsh/slsh.c: "status" was not declared if compiled with
+   SLSH_LIB_DIR defined. (mnoble@space.mit.edu)
+10. slsh/Makefile.g32: new file to allow slsh to be compiled with
+    mingw32.
+11. src/sldisply.c,sltermin.c: if running as setuid/setgid, then limit
+    access to the environment for such a process. <solar@openwall.com>.
+12. src/slstd.c: New intrinsic function _get_namespaces may be used to
+    get a list of currently defined namespaces.
+13. src/slstruct.c: better support for pushing and popping structures
+    from C via the SLang_push/pop_cstruct.  See doc/text/cslang.txt
+    for details.
+14. slsh/Makefile.in: install target added
+15. src/slang.c: additional peep-hole optimizations added
+16. src/*.c: fixes it enable the library to be compiled without floating
+    support support.
+
+Changes since 1.4.5
+1. doc/tm/rtl/struct.tm: Typos in documentation for set_struct_fields
+   corrected by Douglas Burke <dburke@head-cfa.harvard.edu>.
+2. src/sldisply.c: VMS specific problem: SLang_TT_Write_FD was not
+   getting initialized (Hartmut Becker <Hartmut.Becker@compaq.com>).
+3. src/slarith.c: On a 64 bit system, it was possible that Int_Type
+   objects were not getting properly converted to Double_Type.
+4. src/sltoken.c: A unitialized memory reference fixed in the
+   error handling of an empty character declaration ('').
+5. src/slstd.c: call to _SLinit_slcomplex moved to slmath.c.  This
+   means that one does not get complex number support unless math
+   support is also enabled.  (suggested by Michael Noble
+   <mnoble@head-cfa.harvard.edu>)
+6. src/slclass.c: Make sure that when registering a class using
+   SLANG_VOID_TYPE, the reserved class ids are not used.
+7. src/slmisc.c, src/sltoken.c: moved SLatoi and friends from sltoken
+   to slmisc.c.  This avoids linking in the interpreter when it is not
+   needed.
+8. doc/tm/rtl/array.tm: Documentation for the "where" function
+   corrected by <G.Milde@physik.tu-dresden.de>.
+9. src/slkeypad.c: support added for F11 and F12 keys
+10. src/slimport.c: Better handling of dlopen errors as suggested by
+    Michael Noble <mnoble@head-cfa.harvard.edu.
+11. src/slstruct.c: make sure field names have legal names.
+12. src/slistruct.c: SLns_add_istruct_table added.
+13. src/sltoken.c: New name-space specific functions added:
+      SLns_load_file, SLns_load_string
+    These may be used to load a file or a string into a specified
+    namespace.  Simarily, the "eval" and "evalfile" functions may now
+    be given a second argument to specify a namespace.
+14. src/slstd.c: __eqs function added to test for "sameness" of
+    its arguments, __class_type returns information about how an
+    object is classified, __class_id to return its class id.  See
+    examples/saveobj.sl for an example of the use of these functions.
+15. src/slarray.c: a 2-d array can nolonger be specified in-line as,
+    e.g., [[1,2],[3,4]].  This now produces a 1-d array: [1,2,3,4].
+16. src/slregexp.c: fix for case-insentive matches involving e.g.,
+    a\{1,3\} type regexps (Thomas Schultz <tststs@gmx.de>)
+17. src/slarray.c: Allow setting elements of pointer type arrays to
+    NULL, e.g., a[10] = NULL.
+18. src/slsignal.c: If CYGWIN, then assume posix signal handling works.
+19. src/slang.c: Do not allow an intrinsic function, variable, etc
+    table to be added twice.
+20. src/slarray.c: Added _isnull intrinsic for checking for NULL values of
+    array elements.  This is useful since something like
+    "where(a==NULL)" does not check the individual elements, whereas 
+    "where(_isnull(a))" does.
+21. src/sldisply.c: typo involving the initialization of Del_Eol_Str 
+    for terminals that do not have such capability.
+    (Pavel Roskin <proski@gnu.org>)
+
+Changes since 1.4.4
+1. Added QNX specific patches and fixed some typos that prevented it
+   from compiling when _SLANG_OPTIMIZE_FOR_SPEED is 0. (Tijs Michels
+   <tijs@vimec.nl>).
+2. Make sure '#ifeval expr' evaluates up to the end of a line and no
+   further.
+3. src/sldisply.c: Do not look for pad info in the graphic charset
+   pairs string.  Also, when comparing space characters, be sure to
+   take into account ACS.  (Marek Paliwoda <paliwoda@inetia.pl>)
+4. Trivial code cleanups to avoid BCC 5.x warnings.
+5. src/mkfiles/makefile.all: BCC-specific tweaks (John Skilleter
+   <John.Skilleter@pace.co.uk>)
+6. SLang_push/pop_datatype made public
+7. src/slutty.c: if tty is not initialized and an attempt is made to
+   read from the tty, set errno to EBADF.
+8. src/slkeypad.c: New function SLkp_set_getkey_function.  This may be
+   used to specify a different function to read keys.
+9. src/slcurses.c: If an invalid keysequence is entered, simply return the
+   characters of the sequence on successive getkey calls.
+10. src/slarray.c: Inline arrays of the form [1f, 0] were not working.
+11. src/sldisply.c: Make sure SLtt_get_screen size gets called by
+    SLtt_initialize.
+12. doc/tm/rtl/struct.tm: typeof in example for get_struct_field_names
+    corrected by Chris Baluta.
+13. modules/varray.c: example showing how a memory mapped array may be
+    created.  It also illustrates the free_fun callback for arrays.
+14. examples/life.sl: a S-Lang implementation of Conway's life.
+15. src/slclass.c: SLclass_dup_object function added.  Although
+    push/pop can be used to achieve a duplicated object, this function
+    makes it a little easier.
+16. src/slang.h: Prototyes involving "unsigned char" to represent data
+    types have been modified to use SLtype, which is typedefed to be
+    an unsigned char.  V2 will use a different size for data types.
+17. Misc tweaks to aclocal.m4, src/Makefile.in, etc to support MacOSX.
+    I have not tested it on that system.
+18. The library may now be compiled under CYGWIN using the same
+    procedure as under Unix.
+19. src/slkeypad.c: Some xterm-specific escape sequences added by
+    Denis Zaitsev <zzz@cd-club.ru>. 
+
+Changes since 1.4.3
+1.  Fixed a bug that shows up on 64 bit BigEndian machines--- it
+    affected no others.
+2.  Fixed potential problem in pre-parsing binary strings.
+3.  Bug a fixed affecting only pure termcap-based systems.  It has
+    been around a while, I am surprised that it took so long to be
+    discovered.
+
+Changes since 1.4.2
+1.  If init_NAME_module_ns does not exist in a module, then try to
+    load init_NAME_module as long as the module is to be imported into
+    the Global namespace.
+2.  src/sldisply.c: allow more than 200 rows and 250 columns.  Who
+    uses such windows?
+3.  Allow Void_Type to be specified for the data-type in array_map if the
+    function returns nothing.
+4.  src/slarray.c: A statement such as [1:-1][[1:-1]] = [1:-1]; was
+    causing a core dump.
+5.  src/sldisply.c: (Unix/VMS) SLsmg/SLtt routines will write using the file
+    descriptor SLang_TT_Write_FD, which, by default, is initialized to 
+    fileno(stdout).
+6.  src/slposio.c: New C API functions: 
+       SLfile_get_fd returns the file descriptor associated with the 
+         SLFile object.
+       SLfile_dup_fd: duplicate an SLFile object
+7.  src/slposio.c: New intrinsics: dup_fd (dup a file descriptor)
+8.  SLerrno.c: C API Function: SLerrno_set_errno.
+9.  SLerrno.c: More errno values added.
+10. Raising complex types to powers supported.
+11. slang.c: current_namespace was returning "global" instead of
+    "Global" for the global namespace.
+12. slang.c: `use_namespace("X");define f();' was not placing `f' into
+    `X'.
+13. path_is_absolute fixed to return integer
+14. src/slarray.c: generate an error when an empty array is passed to
+    array_map.
+15. src/slarray.c: a=3; a[*] should return an array.
+16. Make sure setlocale(LC_NUMERIC,"C") gets called.
+17. slvideo.c: SLtt_set_cursor_visibility implemented for win32.
+18. slvideo.c: SLtt_get_screen_size corrected for win32 by Zusha P.
+19. configure: modified to not automatically assume that -ldl is
+    required for dlopen. In addition, molesen@zeunastaerker.de sent
+    patches for building dynamically linked library under irix.
+20. slsh/Makefile: generated by configure.
+21. modules/Makefile: generated by configure
+22. src/slimport.c: If no module path has been set, fall back on
+    $(prefix)/lib/slang/modules
+23. src/Makefile.in: DESTDIR support added by Brad <brad@comstyle.com>.
+24. src/Makefile.in: documentation is installed in $(prefix)/doc/slang
+    and no longer in $(prefix)/doc/slang/$(slang_version)
+25. sleep intrinsic can take a floating point number to sleep
+    fractional seconds.
+26. src/slang.c: fix SLang_run_hooks to accept a namespace qualifier.
+27. New modules added to the module directory: fcntl, select, termios.
+
+Changes since 1.4.1
+1.  slang.c: Under certain conditions, the continue statement was not
+    properly handled in do..while statements.  src/test/loops.sl added
+    for testing.
+2.  slparse.c: avoid potential (rare?) infinite loop when slang error occurs
+    (Stanis³a Bartkowski <sb@protest.com.pl>).
+3.  slsmg.c: When SLsmg_init_smg is called, mark the display as trashed.
+4.  It is now possible to add intrinsics to their own namespace via
+    new SLns_add* functions.  Moreover, the import function now takes
+    an optional additional argument that specifies a namespace.
+5.  New namespace intrinsics: use_namespace, current_namespace
+6.  Changed inner-product algorithm to minimize the number of cache
+    misses.
+7.  sldisply.c: Kanji specific patch from Jim Chen
+    <jimc@ns.turbolinux.com.cn>.
+8.  sldisply.c: Assume that Eterm and rxvt are xterm-like (Michael
+    Jennings <mej@valinux.com>).
+9.  sldostty.c: mouse support added by Gisle Vanem <giva@bgnett.no>.
+10. slsearch.c: avoid infinite loop if search string has no length.    
+11. SCO elf support added by Mike Hopkirk <hops@sco.com>.
+12. slregexp.c: regexp \d+ was not working properly
+13. keyhash.c: typos involving USER_BLOCK keywords corrected.
+    (the use of USER_BLOCKs is discouraged).
+14. New intrinsic variable: _slang_doc_dir.  This specifies the
+    installation location of the doc files.
+15. Make sure it can compile with  SLTT_HAS_NON_BCE_SUPPORT set to 0.
+
+Changes since 1.4.0
+1.  slw32tty.c: `v' key was not being handled on win32 systems.  Also,
+    Shift-TAB will now generate ^@-TAB.
+2.  New intrinsic function: strreplace.  This is more flexible than
+    str_replace.
+3.  VMSMAKE.COM: slstring added to list of files to get compiled.
+4.  slsh/Makefile, modules/Makefile: added patch from Jim Knoble
+    <jmknoble@pobox.com> to create elf versions (make ELF=elf).
+5.  AIX IBMC patches from Andy Igoshin <ai@vsu.ru>.
+6.  autoconf/config.sub: tweaked to properly handle recent alpha
+    systems.
+7.  If compiling on an alpha, add -mieee compiler flags.
+8.  SLang_roll_stack and SLang_reverse_stack functions made public.
+9.  SLang_free_function added.  If you call SLang_pop_function, then when
+    finished, call SLang_free_function.  This does nothing in 1.X but
+    may do something in 2.x.
+10. src/slrline.c: Keybindings for ESC O A, etc added.
+11. src/slsmg.c: SLsmg_write_nstring: avoid many loops if an extremely
+    large value is passed (> 0x7FFFFFFF).
+12. src/slregexp.c made thread safe
+13. src/slsmg.c: Cursor was not always properly positioned when
+    after SLsmg_touch_lines called.
+14. If terminal does not have erase to eol capability, then use spaces.
+15. doc/tm/strops.sl: doc for strcat updated to reflect its ability to
+    concatenate N strings.
+16. Documentation updated to indicate that floating point range arrays
+    are open intervals such that [a:b] does not include b.  slarray.c
+    was modified to enforce this specification.  Previously, whether
+    or not b was included in the interval was indeterminate.
+17. src/slsmg.c: bug involving SLsmg_set_screen_start fixed.
+18. src/slparse.c: parser was failing to catch misplaced `}'.
+
+Changes since 1.3.10
+1.  If a floating point exception occurs and the OS allows the library
+    to handle it without forcing a longjmp, then SL_FLOATING_EXCEPTION
+    will get generated instead of SL_INTRINSIC_ERROR.  Note: Linux
+    provides no way to handle floating point exceptions without
+    forcing a longjmp.  In my opinion, this is a flaw.
+2.  SLang_pop_double was returning the wrong value for short and
+    character types.
+3.  New intrinsic: is_struct_type(X) ==> non-zero is X is a struct.
+4.  typecast operation from user defined type to Struct_Type added.
+5.  slkeypad.c: DOS/Windows DELETE_KEY definition added (Doug Kaufman
+    <dkaufman@rahul.net>)
+6.  slposdir.c: Do not depend upon the existence of rmdir on VMS
+    systems.
+7.  slang.c: abs, sign, mul2, chs, sqr were not being treated as
+    function calls.
+8.  sldisply.c:SLtt_cls:  If the terminal is a color terminal but
+    being used as a black and white terminal, then reset colors before
+    clearing.
+9.  path_sans_extname intrinsic added.
+10. slimport.c: If module defines deinit_NAME, will be be called prior
+    to unloading the module. (Ulrich Dessauer <des@gmx.de>)
+
+Changes since 1.3.9
+0.  typedef unsigned short SLsmg_Char_Type added to slang.h.
+    Applications that access SLsmg functions read/write_raw and
+    SLsmg_char_at should use SLsmg_Char_Type unstead of unsigned short
+    because this will be changed to unsigned long in version 2.0.
+
+1.  Documentation patches from Vlad Harchev <hvv@hippo.ru> added.
+2.  slstring.c:  offsetof(SLstring,bytes) -->
+    offsetof(SLstring,bytes[0]) to avoid compiler warning on some
+    systems.
+3.  slcmplex.c: an int was used where a double should have beed used.
+4.  egcs g++ was optimizing slang.c:SLclass_push_ptr_obj away because
+    it was declared as inline.  In my opinion, this is another g++ bug.
+5. sscanf intrinsic added.  See docs.
+6. SLmake_lut rewritten to correct incorrect handling of ranges with a
+   hyphen at the end.
+7. Small bug involving non-BCE terminals in SLsmg_set_color_in_region
+   fixed.
+8. Functions SLcomplex_asinh/acosh/atanh implemented.
+9. install-elf will nolonger install .h files twice.
+10. @Struct_Type may be used to create a struct.
+12. X[i]++, X[i]-=Y, etc implemented.
+13. Much of slw32tty.c rewritten to fix several bugs in the win32 tty
+    support.  In addition, if SLgetkey_map_to_ansi(1) has been called,
+    then function and arrow keys will produce escape sequences that
+    allow one to distinguish alt, ctrl, and shift function keys.
+14. OS/2 specific typo in slposdir.c corrected (Eddie Penninkhof
+    <wizball@xs4all.nl>).
+15. slang.c:add_slang_function: On the very rare occasion that this
+    function failed, memory would get freed twice.
+
+Changes since 1.3.8
+1. Color was not enabled on VMS.
+2. If MAKE_INTRINSIC was used to declare a function which takes
+   arguments, then a typecast error would result when the function was
+   called.  New programs should not use MAKE_INTRINSIC since it
+   bypasses argument type-checking.
+3. src/sl-feat.h: SLTT_XTERM_ALWAYS_BCE variable added to force the
+   assumption of the bce (background-color-erase) capability of xterm.
+   The default is 0, which means to accept the terminfo setting.
+   To force it to 1 during run-time, set the COLORTERM_BCE environment
+   variable.  This is useful when using, e.g., rxvt to login to a
+   solaris system where the terminfo file will probably not indicate
+   bce.
+4. SLw32tty.c:SLang_init_tty: Open CONIN$ instead of using
+   GetStdHandle.  This is necessary if stdin has been redirected.
+5. SLposdir.c: Stat structure contains new field `st_opt_attrs' that
+   may be used to contain system specific information that `struct
+   stat' does not provide.  In particular, under win32, this field
+   contains the file attributes, e.g., whether or not a file is
+   hidden.
+6. Appropriate typecasts added to avoid warnings on systems that do not 
+   support `void *'.
+7. Characters in the range 128-255 are allowed in identifiers.
+8. Correction to the documentation for SLang_init_tty (Ricard Sierra
+   <irebulle@nexo.es>).
+9. SLANG_END_*_TABLE macros added to quiet silly egcs compiler warnings.
+10. typo in sltime.c caused it not to compile under Ultrix.
+11. Speed improvement of binary operations involving arrays,
+    particularly when used in conjunction with the __tmp function.
+12. traceback messages include the filename containing the function
+13. File local intrinsic variable `_auto_declare' added.  If non-zero, 
+    any undefined global variable will be given static scope.
+14. __uninitialize intrinsic function added.
+15. listdir was returning NULL on empty directories.  It has been
+    changed to return String_Type[0].  It will return NULL upon error.
+16. slang.h: if __unix is defined, then also define __unix__ (Albert
+    Chin-A-Young <china@thewrittenword.com>).
+17. foreach using extended to File_Type objects.  See documentation.
+18. Tweak to the inner-product operator such that if A is a vector,
+    and B is a 2-d matrix, then A will be regarded as a 2-d matrix
+    with 1 column.
+
+Changes since 1.3.7
+0. configure script updated to autoconf 2.13.  If /usr/include/slang.h
+   exists, then the default prefix will be set to /usr.
+1. Compile error fixed if _SLANG_HAS_DEBUG_CODE is 0.
+2. Bug fix involving typecast(Array_Type, Any_Type).
+3. __IBMC__ patches from Eddie Penninkhof <wizball@xs4all.nl>.
+4. If A = Assoc_Type[] (Any_Type array), then A[x] automatically
+   dereferences the Any_Type object.
+5. Bug fixed involving Assoc_Type optimization cache.
+6. Tweaks to SLtt_smart_puts for improved performace.
+7. array_map modifed such that the first array in its argument list
+   controls the number of elements in the output array.  This is a
+   backward compatible change and makes the function more flexible.
+8. Additional tweaks to speedup array inary functions if
+   _SLANG_OPTIMIZE_FOR_SPEED > 1.
+9. Patch from Thomas Henlich <henlich@mmers1.mw.tu-dresden.de> fixing
+   a problem with the `SLang_define_case' function, which allows
+   customization of the upper/lower case tables.
+10. strtrans and str_delete_chars intrinsic functions added.
+11. tweaks to interpreter for some additional speed.
+
+Changes since 1.3.6
+1. Added a modified version of a patch from Martynas Kunigelis
+   <martynas@diskena.dammit.lt> to allow writes to the lower left
+   corner.
+2. SIZEOF_LONG changed to 4 for VMS alpha systems (Jouk Jansen
+   <joukj@hrem.stm.tudelft.nl>).
+3. MSC patches from gustav@morpheus.demon.co.uk (Paul Moore).  He also
+   contributed code for listdir with MSC.
+4. SLsmg.c: Background color erase tweaks for terminals that lack this
+   capability.
+5. Fixed a NULL pointer dereference when doing Struct_Type[2][0].
+6. Added slsh/scripts/ls and slsh/scripts/badlinks.  `ls' is designed
+   for non-Unix systems and `badlinks' finds all symbolic links in
+   specified directories that point to non-existent files.
+7. SLang_Version_String and intrinsic variable _slang_version_string
+   added.
+8. stat_file modified under win32 such that a trailing `\' is stripped
+   if present.
+9. stat_is intrinsic modified to return a character instead of an
+   integer.
+10. The matrix-multiplication operator `#' now performs inner-products
+    on arrays, e.g.,  if A and B arrays:
+         A = A_i..jk
+	 B = B_kl..m
+    Then, (A#B)_i..jl..m = A_i..jk B_kl..m where k is summed over.
+    This means that `#' is a matrix multiplication operator for 2-d
+    arrays, and acts as a dot-product operator for 1-d arrays.
+    In the process, it has been extended to complex numbers.
+
+11. _reshape intrinsic function added.  Unlike `reshape', this
+    function creates a new array and returns it.
+12. Array indexing via characters works again, e.g., A['a'].
+   
+Changes since 1.2.2
+0. New assignment operators: *= /= &= |=
+   The addition of these operators meant that some of the internal
+   byte-codes had to be modified.  This change should only cause
+   problems with byte-compiled or preprocessed .sl files.  As far as I
+   know, only the JED editors uses this feature.  So, after upgrading
+   the library, and before running JED, do the equivalent of
+   
+        rm $JED_ROOT/lib/*.slc
+
+   That is, delete the byte-compiled .slc files.
+
+1. Now the language supports `!if ... else' statements.  
+2. New intrinsics: 
+
+       __is_initialized:  This may be used to see whether or
+          not a variable is initialized, e.g, __is_initialized (&variable);
+       __get_reference: Returns a reference to an object with a
+          specified name.
+       rmdir, rename, remove (slfile.c): these return 0 upon success, -1 upon
+          failure and set errno
+       getpid, getgid, getppid (slunix.c)
+       _typeof: This is similar to `typeof' except in the case of
+          arrays where it returns the data type of the array
+       __pop_args, __push_args: see documentation
+       fseek, ftell, and symbolic constants SEEK_END, SEEK_CUR, SEEK_SET
+       sleep
+       usage
+
+3. `Conj' function added to get the complex conjugate
+4. New array module that implementes additional array functions, e.g.,
+   transpose, matrix multiplication, etc...  Use `SLang_init_array' to
+   initialize.
+5. An array such as [[1,2,3],[4,5,6]] is interpreted as a 2-row
+   3-column array.
+6. Amiga patches from Jörg Strohmayer <j_s@gmx.de>.
+7. New table types:
+
+       SLang_IConstant_Type
+       SLang_DConstant_Type
+       
+   These are useful for defining symbolic constants.  See slmath.c and
+   slfile.c for examples of their use.
+
+8. A new pseudo-function: __tmp
+   This `function' takes a single argument, a variable, and returns
+   the value of the variable, and then undefines the variable.  For
+   example,
+   
+        variable x = 3;
+	variable y;
+	y = __tmp(x);
+
+   will result in `y' having a value of `3' and `x' will be undefined.
+   The purpose of this pseudo-function is to free any memory
+   associated with a variable if that variable is going to be
+   re-assigned.  For example, consider:
+
+        variable x = [1:10:0.1];
+        x = 3*x^2 + 2;
+
+    At the time of the re-assignment of `x' in the last statement, two
+    arrays will exist.  However,
+
+        x = 3*__tmp(x)^2 + 2;
+    
+    results in only one array at the time of the assignment, because
+    the original array associated with `x' will have been deleted.  This
+    function is a pseudo-function because a syntax error results if
+    used like
+    
+        __tmp (sin(x));
+
+9.  New low-level push/pop functions that are designed specifically
+    for use in constructing the push/pop methods of application
+    defined data types.  These functions have names of the form:
+    
+        SLclass_push_*_obj
+        SLclass_pop_*_obj
+	
+    where * represents int, long, char, short, ptr, double, float.
+    See sltypes.c to see how they are used by, e.g., SLANG_INT_TYPE.
+
+10. New module import facility.  See modules subdirectory for
+    examples.  To enable this, use
+
+        SLang_init_module
+	
+    in you application.  Modules will be searched in the following order
+    
+        1.  Along the path specified by the `set_import_module_path'
+	    function, or by the C functiion SLang_set_module_load_path.
+	2.  Along the path given by the SLANG_MODULE_PATH environment 
+	    variable.
+	3.  Along a system dependent path, e.g., LD_LIBRARY_PATH
+        4.  In the current directory.
+
+    New interpreter intrinsics include:
+    
+        import (String_Type MODULE_NAME);
+	set_import_module_path (String_Type PATH);
+	String_Type get_import_module_path ();
+
+11.  New integer and floating point types added to the language.  Now
+     all basic C signed and unsigned integer types are supported:
+
+       C bindings             S-Lang bindings
+       ---------------------------------------
+       SLANG_CHAR_TYPE        Char_Type
+       SLANG_UCHAR_TYPE       UChar_Type
+       SLANG_SHORT_TYPE       Short_Type
+       SLANG_USHORT_TYPE      UShort_Type
+       SLANG_INT_TYPE         Int_Type
+       SLANG_UINT_TYPE        UInt_Type
+       SLANG_LONG_TYPE        Long_Type
+       SLANG_ULONG_TYPE       ULong_Type
+       SLANG_FLOAT_TYPE       Float_Type
+       SLANG_DOUBLE_TYPE      Double_Type
+       
+    For example, `Long_Type[10]' creates an array of 10 longs.
+
+12. New intrinsic: set_struct_field.  See function reference for more
+    info.
+
+----- snapshot slang1.3_981030 made available -----
+
+13. Type synonyms added: 
+
+        Int16_Type, UInt16_Type   (16 bit (un)signed integer)
+        Int32_Type, UInt32_Type   (32 bit (un)signed integer)
+        Int64_Type, UInt64_Type   (64 bit (un)signed integer)
+        Float32_Type              (32 bit float)
+        Float64_Type              (64 bit float)
+
+    Not all systems support 64 bit integers.  These synonyms are
+    useful when one needs integers and floats of a definite size.
+
+14. array_sort changed to use qsort.  The main reason for this is that
+    the previous sorting method was derived from a numerical recipes
+    merge sort.
+
+15. New namespace manipulation functions available.  When a function
+    or variable is declared as `static', it is placed in the private
+    namespace associated with the object being parsed (a file).  By
+    default, there is no way of getting at that function or variable
+    from outside the the file.  However, the private namespace may be
+    given a name via the `implements' function:
+    
+         implements ("A");
+
+    Then the private variables and functions of the namespace A may be
+    accessed via A->variable_name or A->function_name.  The default
+    global namespace is called `Global'.  For example, the intrinsic
+    function `message' is defined in the global namespace.  One may
+    use either of the following forms to access it:
+    
+         message ("hello");
+	 Global->message ("hello");
+
+----- snapshot slang1.3_981104 made available -----
+
+16. New intrinsics: 
+
+        strtok  (See documentation)
+	length  (Get the length of an object)
+
+17. New data type added: Any_Type.  An array of such a type is capable
+    of holding any object, e.g.,
+    
+         a = Any_Type [3];
+	 a[0] = 1; a[1] = "string"; a[2] = (1 + 2i);
+	 
+    Dereferencing an Any_Type object returns the actual object.  That
+    is, @a[1] produces "string".
+    
+18. Associative arrays added.  See documentation.
+19. New `foreach' statement.  See the section on `foreach' in
+    doc/text/slang.txt as well as the examples in examples/assoc.sl
+    and src/calc.sl.
+20. Oops.  sign function was broken.
+21. array_sort modified to also accept &function_name.
+
+----- snapshot slang1.3_981116 made available (1.3.4) -----
+
+22. Before, it was necessary for the aplication to to call
+    SLang_init_slassoc to enable associative array support.  This is
+    nolonger necessary if associative array support is enabled in
+    sl-feat.h.
+
+23. Examples in the documentation modified to use foreach whenever a
+    simplification occurred.
+
+24. Max screen size for 32 bit systems inclreased to 256 rows.
+
+25. `private' keyword added to prevent access to an object via the
+    namespace.  This works exactly like `static' except that `static'
+    objects may be accessed via the namespace.
+
+26. structure access methods now available for application defined
+    types (cl_sput, cl_sget).  Also, note that array access methods
+    are also available.  See slassoc.c for examples.
+
+27. If x is a string, then x[[a:b]] produces a string composed of the
+    characters x[a], ... x[b].
+
+29. New intrinsics: 
+
+       listdir:  This returns the filenames in a specified
+                 directory as an array of strings.
+
+30. Source code for intrinsic functions reorganized in a more coherent
+    fashion.  In particular, SLang_init_slfile and SLang_init_slunix
+    are obsolete (though still available) and applications should call
+    a combination of the new functions:
+    
+          SLang_init_stdio()   /* fgets, fopen, ... */
+          SLang_init_posix_process () /* getpid, kill, ... */
+          SLang_init_posix_dir () /* mkdir, stat, ... */
+
+    Note that `unix_kill' has been replaced by `kill'.  So, if you use
+    unix_kill in your application, change it to `kill'.
+
+31. It is now safe to redefine an object while executing the object,
+    e.g., this is now ok:
+
+       define f(x) { eval ("define f(x) { return x; }"); }
+
+32. Binary strings added.  This means that it is now possible to use
+    strings with embedded null characters.  Too fully exploit this new
+    feature, `fread' and `fwrite' functions were added to the stdio
+    module.  In addition `pack', `unpack', `sizeof_pack',
+    `pad_pack_format' were added for converting between binary strings
+    and other data types.  See Stdio chapter of the documentation for
+    more information.
+
+33. New structure intrinsic: set_struct_fields.  This is useful for
+    setting the fields of a structure without doing each one
+    individually.
+
+34. Interpreter now understands __FILE__ and __LINE__ as referring to
+    the file name and line number of the object being parsed.
+
+35. New intrinsic: array_map.  This applies a function to each element
+    of an array and returns the result as an array.
+
+36. The documentation for the intrinsic functions has been updated and
+    organized into a more coherent form.
+
+37. New interface to C structures.  See the documentation.
+
+38. Modifications to the interpreter integer types so that short and
+    int are equivalent whenever sizeof(short)==sizeof(int).  Ditto for
+    int and long.  This reduces the code size.
+
+39. NULL is equivalent to 0 in while and if statements, e.g.,
+
+       x = NULL;
+       if (x) { never_executed (); }
+       while (x) { never_executed (); }
+
+40. `public' made a keyword to for symmetry with `private' and
+    `static', e.g.,
+      
+         public define a_public_function ();
+	 public variable a_public_variable;
+	 
+41. semantics of `implements' modified such that the default variable
+    and function declarations are `static', i.e.,
+    
+        define xxx ();  % ==> public function
+	implements ("foo");
+	define yyy ();  % ==> static function
+
+42. Patch from Martynas Kunigelis <kunimart@pit.ktu.lt> adding more
+    line and symbol drawing characters.  Also a patch from
+    k-yosino@inatori.netsweb.ne.jp forcing a flush when disabling
+    use of the terminal's status line.
+
+--- Version 1.3.5 released ---
+
+43. Corrected the name of SLang_(sg)et_array_element to be consistent
+    with the documentation.
+
+44. Fixed a bug involving orelse and andelse statements when
+    _debug_info is non-zero.
+
+45. The _apropos intrinsic modified to work with namespaces.  In fact,
+    it now returns an array of matches, or if called with out a
+    namespace argument, it returns values to the stack for backward
+    compatibility.
+
+46. strchop and strchopr functions modified to return arrays. (this
+    changes was actually made in 1.3.5).
+
+47. Semantics of strcompress modified to be more useful.  The new
+    semantics are probably more natural and should pose no
+    compatibility problems.
+
+48. The `*' operator may be used in array index expressions and is
+    equivalent to `[:]', e.g., a[*,1] means all elements in column 1
+    of the 2d array.
+
+49. New intrinsics to convert bstrings <--> arrays:
+  
+        bstring_to_array
+	array_to_bstring
+
+50. New timing intrinsics: tic(); toc(); times ();  Also, unix_ctime
+    renamed to ctime (This change occurred in 1.3.5).
+
+51. strcat modified to accept more than 2 arguments:
+
+       strcat ("a", "b", ..., "c") ==> "ab...c";
+
+52. %S in format specifiers will convert the object to its string
+    representation and use it as %s.
+
+53. strtok defaults to using " \t\r\n\f" if called with one argument.
+
+54. fgetslines takes optional second argument that specifies the
+    number of lines to read.
+
+55. If typeof(A) is IStruct_Type, and the corresponding C pointer is
+    NULL, then pushing A will result in pushing NULL.  This allows A
+    to be compared to NULL.
+
+56. More optimization of arithmetic operations to improve speed.  My
+    tests indicate that the resulting code involving arithmetic
+    operations are about twice as fast as python (1.5) and about 20%
+    faster than perl 5.
+
+57. Patches from Andreas Kraft <kraft@fokus.gmd.de> disabling the
+    listdir intrinsic function if compiled with MSC.  Apparantly, the
+    MSC compiler does not support posix functions such as opendir
+    (although other vendors, e.g, Borland, have no problem with this).
+
+58. `array_sort' intrinsic may be used without a comparison function.
+    See docs.
+
+59. Spelling errors in slang.tm corrected by Uichi Katsuta
+    <katsuta@cced.mt.nec.co.jp> (Thanks!).
+
+60. Default install prefix changed from /usr to /usr/local
+
+61. Changes made to SLtt/SLsmg code so that when a color definition is
+    made via, e.g., SLtt_set_color, then the SLsmg interface will be
+    get automatcally notified so that the next SLsmg_refresh will
+    produce the correct colors.  In addition, SLsmg_touch_screen added.
+
+62. It is now possible to evaluate S-Lang expressions with the
+    S-Lang preprocessor e.g.,
+      
+        #ifeval (_slang_version > 9900) || (x == 1)
+
+63. sl-feat.h: Patch from Jörg Strohmayer <j_s@gmx.de> to define
+    _SLANG_MAP_VTXX_8BIT=1 for AMIGA.
+
+64. New intrinsics: 
+      strjoin.  This joins elements of a string array.
+      localtime, gmtime
+
+65. New SLsmg function: SLsmg_reinit_smg.  Instead of calling
+    SLsmg_reset_smg followed immediately by SLsmg_init_smg when
+    processing SIGWINCH signals, call SLsmg_init_smg instead.  This
+    will allow SLsmg based code to properly redraw themselves when
+    running in a SunOS cmdtool window by working around a bug in
+    cmdtool.
+
+===========================================================================
+
+Changes since 1.2.1
+ 1. slcmd.c was not parsing characters in single quotes correctly,
+    e.g., 'a'.
+
+Changes since 1.2.0
+ 1. Oops.  A NULL pointer could be referenced in slcmd.c.
+
+Changes since 1.0.3 beta
+
+-1. The SLKeyMap_List_Type structure has been modified to allow the
+    name of the keymap be be an arbitrary length.  Unfortunately, this
+    change breaks backward compatibility.  So, if you have programs
+                                               ^^^^^^^^^^^^^^^^^^^^
+    that are dynamically linked to previous BETA versions of 1.0, you
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    will have to recompile those applications!!!
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+0. The variable SLsmg_Newline_Moves has been renamed to
+   SLsmg_Newline_Behavior with the following interpretation:
+#define SLSMG_NEWLINE_IGNORED	0      /* default */
+#define SLSMG_NEWLINE_MOVES	1      /* moves to next line, column 0 */
+#define SLSMG_NEWLINE_SCROLLS	2      /* moves but scrolls at bottom of screen */
+#define SLSMG_NEWLINE_PRINTABLE	3      /* prints as ^J */
+
+1. Added patches from Joao Luis Fonseca <joaolf@centroin.com.br> 
+   to src/mkfiles/makefile.all and a necessary OS/2 specific
+   declaration to slvideo.c.  I also added the Watcom patches from
+   Bill McCarthy <WJMc@pobox.com> to makefile.all.
+2. The terminfo code is now aware of the complete set of terminfo
+   definitions.  However, the screen management routines support a
+   small subset. (Eric W. Biederman <ebiederm+eric@npwt.net>).
+3. Improvements to the SLsmg scrolling alogorithm.
+4. SLang_process_keystring and SLang_make_keystring now return NULL upon
+   failure.
+5. SLcomplex_sqrt branch cut modifed to be consistent with FORTRAN.
+6. If the system supports vsnprintf and snprintf, they are used.  The
+   assumption is that they return EOF upon failure.  My linux man page
+   for these functions have conflicting statements regarding this.
+
+7. Simplified handling of memory managed types.  Now it is possible to
+   pass the managed object directly to the intrinsic function.  See
+   slfile.c for an explicit example of this technique.  Similarly,
+   references may also be passed and the function SLang_assign_to_ref
+   may be used to assign values to the referenced object.  This is
+   also illustrated in slfile.c.
+
+8. QNX specific tweak to slfile.c from Pavanas Abludo Incusus
+   <pavanas@ccia.com>.
+
+9. Fixed a problem where, e.g., 
+
+        x = Double_Type [7,8,9];
+	y = x[0,[:],[:]];
+   
+   returned y = Double_Type[8*9] instead of the more intuitive result
+   Double_Type[8,9];
+
+10. SLcmd_Cmd_Table_Type structure changed to permit an unlimited
+    number of arguments.  The changed should be backward compatible
+    except that a recompilation of the application will be necessary.
+11. New SLsmg function: SLsmg_set_color_in_region may be used to set
+    the color of a specified region.  See demo/smgtest.c for an
+    example of how this is used.  Another use would be to draw shadows
+    around a box.
+12. OS2 ICC patches from Eddie Penninkhof <eddie.penninkhof@tip.nl>.
+13. Grammar tweaked to make the pow (^) operator postfix-unary.  This
+    makes more sense mathematically so that:
+    
+        a^b^c ==> a^(b^c);
+	-(a)^b ==> -(a^b);
+
+14. New struct specific intrinsics:
+
+       get_struct_field_names
+       get_struct_field_value
+       _push_struct_field_values
+
+    See function reference for more information on these.
+
+Changes since 1.0.2 beta
+0. SLtt_init_video, SLtt_reset_video, SLsmg_resume_smg,
+   SLsmg_suspend_smg have been modifed to return 0 upon success, or -1
+   upon error.
+1. Configure script modified to report slang version as 1.0.x instead
+   of 1.0.0x.
+2. Bug fix involving automatic detection of color (Unix)
+3. slvideo.c bug fixed (WIN32, Thanks Chin Huang <cthuang@vex.net>)
+4. Slsignal modified so that fork is not used for CYGWIN32, suggested
+   by vischne@ibm.net.
+5. Solaris ELF patches integrated into configure.in.  Now ELF support
+   is available for Linux and Solaris.  Thanks Jan Hlavacek
+   <lahvak@math.ohio-state.edu>.
+6. The library now works with MING32 and should work with CYGWIN as
+   well.  See INSTALL.pc and src/mkfiles/README for more information.
+   Do NOT use the configure script under these environments.
+7. A new IBMPC_SYSTEM function added that affects WIN32, MSDOS, and
+   OS/2 systems: 
+     
+         SLang_getkey_map_to_ansi (int enable);
+	 
+   If `enable' is non-zero, arrow and function keys will be mapped to
+   the ansi equivalents.
+8. The WIN32 terminal support has been modified to be more consistent with
+   the other platforms.  In particular, mouse button press reporting
+   has been added (SLtt_set_mouse_mode), and bright color support
+   appears to have been fixed.  Note: For MINGW32 and CYGWIN32, use
+   src/mkfiles/makefile.all.  Do not use the Unix configure script
+   because WIN32 is NOT Unix.
+9. Several changes to slvideo.c that deals with the proper use of the
+   scroll region for DOS/Windows type systems.
+10. demo/smgtest.c has been enhanced.
+11. Some cleanup performed to src/slprepr.c
+12. WIN32 and WIN16 preprocessing symbols are defined when appropriate.
+
+
+Changes since 1.0.1 beta
+1. More VMS patches.  Thanks Andy.
+
+Changes since 1.0.0 beta
+1. Fixed a bug in the automatic detection of color terminal
+2. Patches to get it to compile on OS2 and VMS
+3. Replaced \r\n in slarray.c with \n
+
+Changes since 0.99-38
+0. Many, many changes to the interpreter.  See documentation.
+
+1. SLang_free_intrinsic_user_object shortened via define on VMS.
+2. Make sure slang.h does not defined REAL_UNIX_SYSTEM on OS/2.
+3. New search paths for termin directories include $HOME/.terminfo and
+   /usr/share/terminfo.
+4. SLsystem function added.  This is a replacement for `system'.  It 
+   implements POSIX semantics for POSIX systems.  Although Linux
+   claims to be a POSIX system, it's `system' routine is broken.
+5. color names color0 ... color7, brightcolor0, ... brightcolor7
+   added for Unix and VMS systems.
+
+Changes since 0.99-37
+1. SLang_input_pending returns -1 if Ctrl-Break pressed (DOS specific).
+2. SLtty_VMS_Ctrl_Y_Hook added for Ctrl-Y trapping.  Keep in mind that
+   this is called from an AST.
+3. Documentation updates
+4. Fixed bug dealing with keymaps with escape sequences involving
+   characters with the high bit set.
+5. slkeypad code ported to DOS
+6. SLsmg_write_raw and SLsmg_read_raw functions added.
+7. Compilation error under QNX fixed.
+9. Small change involving SLang_flush_input.
+
+
+Changes since 0.99-36
+1. Oops fixed a bug in alternate character set handling when
+   SLtt_Use_Blink_For_ACS is set.  This bug only affected DOSEMU.
+2. slvideo.c modification that affects DJGPP version of library.  Now
+   the screen is saved and restored.
+3. Updates to slcurses.c by Michael Elkins.
+4. If a color called `default' is specified, the escape sequence to
+   set the default color will be sent.  Be careful, not all terminals
+   support this feature.  If your terminal supports it, e.g., rxvt,
+   then using
+   
+        setenv COLORFGBG default
+     
+   is a good choice.
+
+Changes since 0.99-35
+1. Fixed alt char set bug introduced in 0.99-35.
+2. New intrinsic: _stk_reverse
+3. New demos: keypad, smgtest, pager
+4. The environment variable COLORFGBG may be used to specify default
+   foreground background colors, e.g., in csh use:
+   
+        setenv COLORFGBG   "white;black"
+	
+   to specify white on black as the default colors.  This also means
+   that a color name of NULL or the empty string "" will get mapped to
+   the default color.
+5. Improved curses emulation provided by Michael Elkins
+   (me@muddcs.cs.hmc.edu).
+6. Small bug fix to SLang_flush_output provided by Balakrishnan k
+   <MDSAAA27@giasmd01.vsnl.net.in>.
+7. Updated some documentation in doc/cslang.tex (Gasp).
+8. Update vmsmake.com file provided by Martin P.J. Zinser
+   (m.zinser@gsi.de).
+
+Changes since 0.99-34
+0. OS/2 video problem solved by Rob Biggar (rb14@cornell.edu).
+
+1. The way the interpreter internally handles strings has changed.
+   This should not affect programs which utilize the library.  Now all
+   strings returned by the function SLang_pop_string should be freed
+   after use.  The SLang_pop_string function will always set the value
+   of the second parameter passed to it to a non-zero value.  For this
+   reason, programs should use the new function SLpop_string and
+   always free the string returned by it after use.
+
+2. If SL_RLINE_NO_ECHO bit is set in the readline structure, the
+   user response will not be echoed.
+   
+3. If terminal is xterm, the TERMCAP environment variable will be
+   ignored.  This change was necessary because of the braindead
+   TERMCAP setting created by the latest version xterm.
+   
+4. Some of the keymap routines were re-coded.  Now it is possible to
+   have lowercase characters as part of the prefix character sequence.
+
+5. New modules.  See demo/pager.c for information.  See also the slrn
+   source code for a more sophisticated use.
+
+      SLscroll: may be useful for routines that deal with displaying
+                linked lists of lines.
+      SLsignal: POSIX signal interface for programs that use SLsmg and
+                SLtt modules.  doc/signal.txt may also prove useful.
+      SLkeypad: Simplified interface to SLang keymaps.
+      SLerrno:  System independ errno routines
+
+Changes since 0.99-33
+1. A couple of interpreter bug fixes.
+
+2. Some macros, e.g., MEMSET, removed from slang.h.  I do not feel
+   that they belong there and it is unlikely that they are used by
+   others.  I made them avalable in the file src/jdmacros.h for anyone
+   whose code depends on them.
+   
+3. The functions jed_mem??? have been renamed to SLmem???.
+
+4. New intrinsic: _obj_type returns type information about object on top
+   of stack.
+
+Changes since 0.99-32
+1. appropriate header files added for VMS
+2. Oops.  0.99-32 introduced a bug positioning cursor. :(
+
+Changes since 0.99-31
+1. Simple minded curses emulation added.  This should help those migrating
+   from curses.  See slang/src/curses/*.c for sample curses demo programs
+   that the SLsmg routines can handle.  See also slang/src/slcurses.c for
+   some wrapper functions.
+2. Changed <config.h> to "config.h" in all source files.
+3. If system lacks terminfo directories, it is compiled with termcap
+   support.  This generalizes and replaces the test for NeXT.   
+4. New functions for slang/src/sldisply.c:
+
+    void SLtt_get_screen_size (void);
+    SLtt_Char_Type SLtt_get_color_object (int);
+    void SLtt_set_color_fgbg (int, SLtt_Char_Type, SLtt_Char_Type);
+    
+   The first function attempts to deduce the correct values of
+   SLtt_Screen_Rows and SLtt_Screen_Cols.  This function is called by
+   sltt_get_terminfo.
+   
+   New constants such as SLSMG_COLOR_BLACK, SLSMG_COLOR_RED, ... have been
+   added to slang.h to facilitate the use of SLtt_set_color_fgbg.
+
+5. Improved error messages
+6. ELF support.  Do: make elf; make install-elf
+
+Changes since 0.99.30
+
+1. Small bug fixed that affects 64 bit machines with a certain byte
+   ordering.   
+2. slutty.c: _POSIX_VDISABLE is used if defined.
+
+Changes since 0.99.29
+
+0. BIG change in handling keymaps.  Specifically, this change effects the
+   change of the `f' field of the SLang_Key_Type structure.  Before, this
+   was VOID_STAR, now it is a union.  The new change is much more portable.
+   In addition, the function `SLang_define_key1' has been removed and
+   replaced by `SLkm_define_key'.  See src/slrline.c for the use of this new
+   interface.  For a short time, the old interface will be available if the
+   preprocessor symbol `SLKEYMAP_OBSOLETE' is defined when slang is compiled.
+   See jed and slrn source for more examples.  
+   
+1. SLang_getkey now reads from /dev/tty (unix).
+2. If the first argument to SLang_init_tty is -1, the current value of the
+   interrupt character will not be changed (unix).
+3. New intrinsic: time
+Changes since 0.99.28
+1.  Oops! Horrible bug in src/slmemcmp fixed.
+2.  slvideo: init_video modified to be more consistent with VMS/Unix routine.
+
+Changes since 0.99.27
+1.  More changes to the configure script
+2.  It looks like hpterm support is in place.  This terminal has a glitch
+    that prevents efficient screen updating.
+3.  New SLsmg function: 
+     
+     void SLsmg_write_color_chars (unsigned short *s, unsigned int len)
+     
+    This function may be used to write a string of characters with
+    attributes.
+
+Changes since 0.99.26
+1.  Slang now uses a configure script under Unix to configure itself.
+2.  New intrinsic functions include _stk_roll, strchop, strchopr.
+3.  Terminals which require an escape sequence to make their arrow keys work
+    are now sent the escape sequence.
+
+Changes since 0.99.25
+1.  New SLsmg variables:
+     SLsmg_Newline_Moves
+     SLsmg_Backspace_Moves
+    These variables control the interpretation of newline and backspace
+    characters in smg.     
+
+Changes since 0.99.24
+1.  SLSMG_RTEE_CHAR, etc... added to OS/2 part of slang.h
+2.  Small fix for aix-term
+
+Changes since 0.99.23
+0.  The makefile for unix has been completely re-written. 
+1.  Some problems dealing with certain color terminals have been resolved.
+2.  `g' generic type added to SLcmd.
+
+Changes since 0.99.22
+0.  The Macro `VOID' has been removed.  The whole point of this macro was to
+    mimick `void *' declarations for compilers that did not support such a
+    construct.  Instead of `VOID *', slang.h now defines `VOID_STAR' and all
+    `VOID *' declarations have been renamed to `VOID_STAR'.  
+    
+    If you use the VOID macro in your application, you have two choices: 
+    
+       1.  Rename all occurances of VOID * to VOID_STAR
+       2.  Add: #define VOID void somewhere appropriate.
+
+1.  \< and \> regular expressions added.
+
+Changes since 0.99.21
+1.  Oops.  I added too much linux stuff (see 3 below).  Some of it backed
+    out to Linux only.
+
+Changes since 0.99.20
+1.  Problem on some VMS systems which lack prototype for atof fixed.
+2.  New function: SLtt_set_mouse_mode.  This is used to turn on/off mouse
+    reporting on Unix and VMS systems.
+3.  The terminal type `linux' is now recognized by the SLtt interface---
+    even if there is no termcap/terminfo entry for it.
+
+Changes since 0.99.19
+1.  User definable types must now have object identification numbers larger 
+    than 127.  The lower limit used to be 100 but this comflicts with many 
+    applications (as well as slang itself) using lower case letters as the
+    object number, e.g., create_array ('s', 10, 1); which creates an array
+    of 10 strings (object number 's' = 115).
+
+2.  New intrinsic: array_info available.
+3.  regular expression matching bug involving \{m,n\} expressions fixed.
+4.  New module: slprepr.c.   This gives programs the ability to use the slang
+    preprocessor.
+5.  News slsmg functions: SLsmg_suspend_smg () and SLsmg_resume_smg ().
+    These are designed to be used before and after suspension.  The SLsmg
+    state is remembered and a redraw is performed by the resume_smg function.
+6.  The function `sltty_set_suspend_state' is now available for Unix
+    systems.  It may be used to turn on/off processing of the suspend
+    character by the terminal driver.
+7.  If SLtt_Try_Termcap is 0, the TERMCAP variable will not be parsed.
+8.  SLang_TT_Read_FD variable is now available for unix.  This is the file
+    descriptor used by SLang_getkey.
+9.  New preprocessor symbols available:
+     SLMATH      : If math functions are available
+     SLUNIX      : If unix system calls are available
+     SLFILES     : Stdio functions available
+     FLOAT_TYPE  : Floating point version
+     
+Changes since 0.99.18
+1.  New intrinsic function: strcompress.  This collapses a string by removing
+    repeated characters.  For example,
+    
+           define collapse (f)
+	   {
+	      while (str_replace (f, " ", ",")) f = ();
+	      return strcompress (f, ",");
+	   }
+
+           collapse (",  ,a b c ,,,d e,f  ");
+      
+    returns: "a,b,c,d,e,f"
+    
+2.  QNX support added.  
+3.  New Functions (unix only): SLtt_tgetstr, SLtt_tgetnum, SLtt_tgetflag.
+4.  Fixed parsing of Octal and Hex numbers so that incorrect values are
+    flagged as errors.  Also, both lower and uppercase values may be used in
+    HEX numbers, e.g., 0xa == 0XA == 0Xa == 0xA.
+5.  MS-Windows support added.  Compile using makefile.msw.  This creates
+    `wslang.lib'.
+6.  New SLsmg functions:  SLsmg_get_row, SLsmg_get_column.  These return the
+    current position.
+
+Changes since 0.99.17
+1.  I have added limited termcap support although slang is still a terminfo
+    based system.  The support is provided via the TERMCAP environment
+    variable.  If this variable exists and contains a termcap entry for which
+    there is no reference to another entry (via tc field), it will be used 
+    to setup the terminal.   If the TERMCAP variable does not exist, or it 
+    refers to a file, terminfo is used instead.  This is not really a
+    limitation since one can set this variable in a way that slang likes by
+    using `tset -s'.
+    
+    The motivation for this support is two-fold:
+       a. Slang programs can now run inside the screen program which sets
+          the TERMCAP variable appropriately.
+       b. A user can now correct defective termcap entries (e.g., for Linux),
+          and have those corrections made available to slang via the `tset' 
+	  command, e.g., by putting something analogous to:
+	     
+	       setenv TERMCAP /corrected/termcap/file/absolute/path/name
+	       eval `tset -s terminal-name`
+	       
+	  in the .login file.
+       c. This also means that I can distribute corrected termcap entries for
+          common terminals.
+	  
+Changes since 0.99.16
+1.  Inadequate terminfo entries for `linux' terminal are compensated for.
+2.  Terminals with the ``Magic cookie glitch'' are flagged as having an
+    unusable highlighting mode.
+
+changes since 0.99.15
+1.  Better checking of parameters passed to search routines.
+2.  Problem with line drawing characters fixed.
+
+changes since 0.99.14
+1.  Ran code through purify.  Fixed one problem reported in slkeymap.c
+2.  Fixed a bug in sldisply.c regarding mono-attributes.
+3.  Code ready for ELF
+changes since 0.99.13
+1.  SLtt_Has_Alt_Charset variable added to xterm.c.  This is motivated by the
+    sad, pathetic fact that although some termcap/terminfo databases suggest 
+    that the terminal can do line drawing characters, the terminal cannot.
+2.  SLsmg_write_nstring function added.  This function may be used to write
+    only n characters of a string padding wit hblanks if necessary.
+3.  If the environment variable COLORTERM exist, SLtt_get_terminfo will set 
+    SLtt_Use_Ansi_Colors to 1.
+4.  Sltt_set_cursor_visibility function added.  If passed a zero integer value,
+    the cursor is hidden; otherwise, it is made visible.
+    
+changes since 0.99.12
+1.  SLsmg now uses the `te' and `ti' termcap entries if present.  Apparantly
+    some terminals need to be put in cursor addressing mode.  This also has
+    the effect of restoring the screen of the xterm to what it was before
+    the program was executed.
+2.  For some types of code, slang is 20% faster!  This is especially
+    noticeable for branching constructs inside tight loops or recursive
+    functions.
+    
+changes since 0.99.10
+1. New version control added:
+    
+    A new preprocessor symbol was added: SLANG_VERSION
+    This is a 6 digit integer of the form: abcdef 
+    This corresponds to version number ab.cd.ef.  So for version 0.99.11:
+    #define SLANG_VERSION 9911
+    
+    In addition, the intrinsic variable `SLang_Version' was changed from a 
+    string to an integer that has the value SLANG_VERSION.  This also implies
+    that the interpreter variable _slang_version is now an integer.
+
+changes since 0.99.9
+1. The terminfo code failed to recognize the automatic margin flag.  This
+   has been corrected.  In addition, the display code nolonger resets the
+   character set upon initialization.  This is considered to be a good thing.
+
+2. There is a new program in slang/doc called `texconv' that will produce a
+   nicely formatted ascii document from the tex formatted ones.  In
+   addition, new documentation has been added: slang.tex which describes the
+   syntax of the slang programming language and cslang.tex which describes
+   the C interface to the library.  The latter document is far from complete
+   but it is a start.
+   
+3. A new variable declaration keyword has beed added: global_variable
+   This keyword is useful for declaring global variables from within
+   functions.  Such a feature simplifies some scripts.
+   
+4. The SLsmg line drawing functions are now in place.
+   
+changes since 0.99.8
+1. \d may now be used in regular expressions to specify a digit.  In addition,
+   \e specifies an escape character.  So for example, `\e\[\d;\dH' matches
+   an ANSI cursor position escape sequence.
+2. Small bug in dealing with terminals that have automatic margins has been
+   fixed.
+3. When compiled with -DSLANG_TERMINFO will use terminfo.  This means that
+   there is no need to link to termcap.
+   
+changes since 0.99.7
+1. New function added to the readline package:
+     int SLang_rline_insert (char *s);
+   this may be used to stuff strings into the rline buffer.  SLSC exploits
+   this feature.
+
+changes since 0.99.6
+
+1. ALL macros beginning with LANG have been changed to use SLANG as the
+   prefix.  For example, the macro LANG_IVARIABLE has been renamed to
+   SLANG_IVARIABLE.  If you have used one of these macros, please make the
+   change.
+   
+2. Application defined types.  See demo/complex.c for an example that
+   defines complex numbers and overloads the binary and unary operators to
+   work with them.
+   
+changes since 0.99.5
+
+
+1. New interface for application defined objects.  Functions include:
+
+   extern SLuser_Object_Type *SLang_pop_user_object (unsigned char);
+   extern void SLang_free_user_object (SLuser_Object_Type *);
+   extern void SLang_push_user_object (SLuser_Object_Type *);
+   extern SLuser_Object_Type *SLang_create_user_object (unsigned char type);
+				
+
+  This means that S-Lang scripts do not have to worry about freeing
+  structures, arrays, etc...  A consequence of this fact is that the
+  intrinsic function `free_array' has been removed.  See examples of this
+  exciting new feature in slang/demo.
+  
+2. Better documentation and examples.  See slang/doc/*.* as well as examples
+   in slang/demo.
+  
+3. Memory allocation macros have changed from MALLOC to SLMALLOC, etc...
+   Applications are encouraged to use these rather than `malloc' because by
+   compiling your application AND the slang library with the -DMALLOC_DEBUG
+   will link in code that checks if you have corrupted memory, freed
+   something twice, etc...  Use the function `SLmalloc_dump_statistics' for
+   a report of memory consumption by your program.
+   
+changes since 0.99.4
+1. cleaned up the source some and I changed the names of the hooks
+   user_whatever to `SLang_User_Whatever'.  This makes them more consistent
+   with other external functions and variables and helps avoid name space
+   pollution.
+changes since 0.99.3
+* added screen management stuff
+* added a new help file reader (see help directory)
+* DOUBLE precision is now the default.  I think that this makes more sense
+  for an interpreted langauge.
+* searching routines added.
+changes since 0.99.2
+* added low level tty support for VMS, DOS, and Unix
+* slang readline added
+* keymap support
+* files restructured so that programs can link, say, the readline library
+   and not get the whole interpreter linked in.
+   
+changes since 0.99.1
+*  obscure bug in regular expression fixed
+*  optimizing performed for 10% speed increase in speed for some language
+     constructs
+
+changes since 0.99.0
+*  semantics of the `switch' statement changed to be more C-like with the
+   addition of the `case' keyword.  For example, one can write:
+   
+        switch (ch)
+	{ case 'A':  
+	    something ();
+	}
+	{ 
+	  case 'B':  
+	    something_else ();
+	}
+	{ case 3.14: 
+	    print ("Almost PI");
+	}
+	{ case "hello":  
+	    print ("hi");
+	}
+   
+   Note that one may mix data types without the possibility of a type
+   mismatch error. 
+   
+changes since 0.98:
+*  matrix package added.  Currently only matrix multiplication and addition
+   is supported.  More functions will be added (determinants, inverse, etc..)
+   This support is provided by the `init_SLmatrix ()' call.  This support 
+   provides the following S-Lang intrinsics:
+   
+         matrix_multiply, matrix_add
+	  
+   
+*  New S-Lang core intrinsic:
+
+         copy_array  :  copys the contents of one array to another
+
+changes since 0.97:
+ 
+*  Double precision floating point supported.  
+   Use the -DFLOAT_TYPE -DUSE_DOUBLE compiler flags to enable this.
+   Note that S-Lang does not support single precision and double precision
+   floating point number SIMULTANEOUSLY.  You must choose one or the other
+   and stick with it!
+   
+*  Byte compiling is now more than simple preprocessing.  This results in
+   about a 20% decrease in loading time.  This also means that if you
+   rebuild your application, you MUST re-bytecompile.
+   
+*  New syntax added:  Consider a function f that returns multiple values.
+   Then to assign these values to, say var_1, and var_2, simply write:
+   
+       (var_1, var_2) = f ();
+       
+    This is an alternative to:  
+    
+        f (); =var_2; =var_1;
+	
+Changes since 0.96:
+
+  It is now possible to use short circuit boolean evaluation of logical
+  expressions is the `orelse' and `andelse' constructs.  Previously, these
+  constructs were only available at the infix level.  The new syntax looks
+  like (example taken from JED's rmail.sl):
+  
+     if (orelse 
+	 {re_bsearch("^\\CFrom:.*<\\(.+\\)>");}
+	 {re_bsearch("^\\CReply-To: *\\([^ ]+\\) *");}
+	 {re_bsearch("^\\CFrom:.*<\\(.+\\)>");}
+	 {re_bsearch("^\\CFrom: *\\([^ ]+\\) *");}
+	 {re_bsearch("^\\cFrom +\\([^ ]+\\) *");}
+       )
+     {
+	from = rmail_complex_get_from(from);
+     }
+     
+
+  Modified some of the array code to use handles to arrays instead of actual
+  arrays.  This adds alot more protection for the use of arrays.  The
+  downside is that there is a limit on the number of active arrays.  This
+  limit has been set to a default value ot 256.  An ``active'' array is an
+  array that has been created but not freed.
+  
+  Fixed a parse error that occurred when an `if' statement imediately follow
+  the `:' in a switch statement.
+  
+  putenv intrinsic added.
+
+  EXIT_BLOCK:  if an exit block is declared, it is called just before the
+               function returns to its caller. 
+
+It is now possible to perform assignments in variable declaration
+statements, e.g.,
+
+variable i = 0, imax = 10, n = strlen (name);
+
+Condition compilation of S-Lang source possible.  See .sl files in the jed
+distribution.
+
+A bug which prevent assignment to a global C floating point variable was
+fixed. 
+
+Changes to `calc':
+
+   `apropos' function added to calc.sl.  For example, `apropos("str")'
+      creates a list of all intrinsic functions that contain the substring
+      "str"  (strcmp, strcat, etc...)
+      
+    Command line arguments are now loaded as S-Lang source files.  This makes
+      it possible to create a Unix executable such as:
+      
+         #! /usr/local/bin/calc
+	 
+	 define hello_world () { print ("hello world"); }
+	 loop (10) hello_world ();
+	 quit ();

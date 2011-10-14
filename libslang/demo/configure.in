@@ -1,0 +1,51 @@
+dnl -*- sh -*-
+
+AC_INIT(smgtest.c)
+
+AC_CONFIG_AUX_DIR(../autoconf)
+
+JD_INIT
+JD_ANSI_CC
+
+AC_PROG_MAKE_SET
+
+AC_CANONICAL_HOST
+
+dnl #-------------------------------------------------------------------------
+dnl # Check for dynamic linker
+dnl #-------------------------------------------------------------------------
+DYNAMIC_LINK_LIB=""
+AC_CHECK_HEADER(dlfcn.h,[
+  AC_DEFINE(HAVE_DLFCN_H)
+  AC_CHECK_LIB(dl,dlopen,[
+    DYNAMIC_LINK_LIB="-ldl"
+    AC_DEFINE(HAVE_DLOPEN)
+   ],[
+    AC_CHECK_FUNC(dlopen,AC_DEFINE(HAVE_DLOPEN))
+    if test "$ac_cv_func_dlopen" != yes
+    then
+      AC_MSG_WARN(cannot perform dynamic linking)
+    fi
+   ])])
+AC_SUBST(DYNAMIC_LINK_LIB)
+
+case "$host_os" in
+  linux )
+    DYNAMIC_LINK_FLAGS="-Wl,-export-dynamic"
+    ;;
+  * )
+    DYNAMIC_LINK_FLAGS=""
+    ;;
+esac
+AC_SUBST(DYNAMIC_LINK_FLAGS)
+
+JD_TERMCAP
+JD_GCC_WARNINGS
+
+JD_SET_OBJ_SRC_DIR(.)
+JD_GET_MODULES(modules.unx)
+
+AC_OUTPUT(Makefile)
+
+JD_CREATE_MODULE_EXEC_RULES
+JD_APPEND_RULES(Makefile)

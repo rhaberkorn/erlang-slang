@@ -1,0 +1,43 @@
+slsh (slang-shell) is a work in progress.  See the scripts/
+subdirectory for some trivial examples of its use.
+
+Usage: slsh [OPTIONS] [[-|file] [args ...]]
+ --help           Print this help
+ --version        Show slsh version information
+ -g               Compile with debugging code, tracebacks, etc
+ -n               Don't load personal init file
+ -i init-file     Use this file instead of default
+ -v               Show verbose loading messages
+
+Along with the slsh executable, the files lib/slsh.rc and lib/*.sl
+will also get installed.
+
+Upon startup, the program will try to load slsh.rc as follows:
+
+   If either SLSH_CONF_DIR or SLSH_LIB_DIR environment variables
+   exist, then look in the corresponding directories for slsh.rc.
+   Otherwise look in:
+
+       $(prefix)/etc       (specified in Makefile)
+       /usr/local/etc/
+       /usr/local/etc/slsh/
+       /etc/
+       /etc/slsh/
+
+The slsh.rc file may load other files from slsh's library directory in
+the manner described below.  
+
+Once slsh.rc is loaded, slsh will load $HOME/.slshrc if present.
+Finally, it will load the script specified on the command line.  If
+the name of the script is "-", then it will be read from stdin.
+
+When a script loads a file via the built-in "evalfile" function or the
+"require" function (autoloaded by slsh.rc), the file is searched for
+along the SLSH_PATH as specified in the Makefile.  An alternate path
+may be specified by the SLSH_PATH environment variable.
+
+The search path may be queried and set during run time via set the
+get_lib_path and set_lib_path functions, e.g.,
+
+   set_lib_path ("/home/bill/lib/slsh:/usr/share/slsh");
+

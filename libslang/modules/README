@@ -1,0 +1,66 @@
+This directory contains some examples of dynamically loaded modules
+that may be loaded via the `import' intrinsic function.  If you choose
+to build these modules, do so only AFTER installing the slang library
+because the Makefile references the installed slang library location.
+
+The default installation location for the modules is in
+$(prefix)/lib/slang/modules.
+
+--------------------------------------------------------------------
+
+This directory contains some examples of dynamically loaded modules
+that may be loaded via the `import' intrinsic function:
+
+  import ("NAME");
+
+This intrinsic function is available to applications that enable it
+via a call to the `SLang_init_import' function.  Of course, the OS
+must provide support for dynamic linking.
+
+When a slang script contains a line such as
+
+  import ("NAME");
+  
+or
+
+  import ("NAME", "NAMESPACE");
+  
+
+slang requests that the operating system dynamically link to a shared
+object called NAME-module.so.  Then the slang library will call the
+function `init_NAME_ns' that NAME-module.so must define.  This function
+must have the prototype:
+
+  int init_NAME_ns (char *namespace);
+
+and shall return 0 upon success, or -1 if an error occurred.  The
+namespace argument corresponds to the second (option) parameter of the
+import intrinsic.  This means that the user wishes to import the
+module into the specified namespace.  To this end, the module must
+call one of the SLns_* functions to load intrinsics into a namespace.
+
+Optionally, the module may define a function called `deinit_NAME' that
+will be called by the interpreter to deinitialize the module.  This
+function must have the prototype:
+
+   void deinit_NAME (void);
+
+To ensure the correct prototypes for these functions, the module
+should include the line:
+
+    SLANG_MODULE(name);
+
+SLANG_MODULE is a macro that expands into function prototypes.
+
+See the examples in this directory for more information.
+
+To run these modules, use the slsh program in ../slsh/.
+slsh.c is a program that embeds the interpreter and may be used to
+test slang scripts.  In fact, it may be used to create unix executable
+scripts via, e.g.,
+
+#! /usr/bin/env slsh
+
+as the first line of the script.  See ../slsh/scripts subdirectory for
+examples of this approach.
+

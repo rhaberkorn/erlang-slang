@@ -1,0 +1,37 @@
+# -*- sh -*-
+
+#This is a UNIX-only makefile.  For other systems, get a makefile from
+#src/mkfiles/
+
+@SET_MAKE@
+SHELL = /bin/sh
+
+all:
+	cd src; $(MAKE) all
+elf:
+	cd src; $(MAKE) elf
+	@echo Use make install-elf to install it.
+runtests:
+	cd src; $(MAKE) runtests
+demos:
+	cd demo; $(MAKE)
+clean:
+	/bin/rm -f *~
+	cd src; $(MAKE) clean
+	cd demo; $(MAKE) clean
+install:
+	cd src; $(MAKE) install
+install-elf:
+	cd src; $(MAKE) install-elf
+	@echo ""
+	@echo "On some systems, e.g., linux, you may also have to run ldconfig."
+	@echo ""
+install-links:
+	cd src; $(MAKE) install-links
+#
+distclean:
+	/bin/rm -f *~ Makefile config.status config.log config.cache files.pck
+	cd src; $(MAKE) distclean
+	cd demo; $(MAKE) distclean
+#
+

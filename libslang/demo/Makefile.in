@@ -1,0 +1,66 @@
+# -*- sh -*-
+
+#---------------------------------------------------------------------------
+# Choose a C compiler.  It must understand prototypes.
+#-----------------------------------------------------------------------------
+CC = @CC@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@ @DYNAMIC_LINK_FLAGS@
+#-----------------------------------------------------------------------------
+# Location where object files are placed (Absolute path)
+#-----------------------------------------------------------------------------
+OBJDIR = @OBJDIR@
+SRCDIR = @SRCDIR@
+#-----------------------------------------------------------------------------
+# Directory where the various libraries are located.
+#-----------------------------------------------------------------------------
+SLANG_INCLUDE = $(SRCDIR)/../src#             location of slang.h
+SLANG_LIB = $(SLANG_INCLUDE)/$(ARCH)objs#     location of libslang.a
+
+#---------------------------------------------------------------------------
+# Other libraries
+#---------------------------------------------------------------------------
+TCAPLIB = @TERMCAP@ @DYNAMIC_LINK_LIB@ 
+#TCAPLIB = -ltermcap
+
+#----------------------------------------------------------------------------
+# End of user configuration
+#----------------------------------------------------------------------------
+@SET_MAKE@
+SHELL = /bin/sh
+OTHERSTUFF = useropen pager keypad smgtest
+CONFIG_H = config.h
+
+ALL_CFLAGS = $(CFLAGS) -Dunix -I$(SLANG_INCLUDE)
+
+COMPILE_CMD = $(CC) -c $(ALL_CFLAGS)
+EXECLIBS = -L$(SLANG_LIB) -lslang -lm $(TCAPLIB)
+EXECDEPS = $(SLANG_LIB)/libslang.a
+DOT_O_DEPS = demolib.c
+
+#---------------------------------------------------------------------------
+all: $(OBJDIR) $(CONFIG_H) $(OTHERSTUFF)
+
+$(CONFIG_H) : $(SLANG_LIB)/libslang.a ../src/config.h
+	/bin/cp ../src/config.h $(CONFIG_H)
+$(SLANG_LIB)/libslang.a :
+	cd ../src; $(MAKE)
+#
+$(OBJDIR):
+	@mkdir $(OBJDIR)
+#---------------------------------------------------------------------------
+# Housekeeping
+#---------------------------------------------------------------------------
+# The symlinks target is for my own private use.  It simply creates the object
+# directory as a symbolic link to a local disk instead of an NFS mounted one.
+symlinks:
+	-/bin/rm -f $(ARCH)objs
+	mkdir -p $(HOME)/sys/$(ARCH)/objs/slang/demo
+	ln -s $(HOME)/sys/$(ARCH)/objs/slang/demo $(ARCH)objs
+clean:
+	-/bin/rm -f $(OBJDIR)/* *~
+distclean: clean
+	-/bin/rm -rf $(OBJDIR) Makefile
+#---------------------------------------------------------------------------
+# Everything else from configure script
+#---------------------------------------------------------------------------

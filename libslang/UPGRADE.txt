@@ -1,0 +1,295 @@
+This document consists of two parts.  The first part describes some
+changes to the interpreter that may affect existing slang macros.  The
+second part describes changes that may affect applications that use
+the library.
+
+Part 1: Interpreter Changes.
+============================
+
+Changes to the slang syntax.
+---------------------------
+ The syntax has not changed too much since version 0.99-XX.  However
+ there are a few changes that you need to be aware of so that you can
+ modify your slang functions accordingly.  See slang/doc/* for more
+ information about slang version 1.0.
+ 
+ To help track areas where you code needs changed, add the following
+ line to the top of each file that you load into the interpreter:
+ 
+     _debug_info = 1;
+
+ This will cause extra debugging information to get generated.
+
+ The important differences that you must be aware of are listed below:
+
+ * The parser is more sensitive to missing semi-colons.  For that
+   reason, you may experience some parse errors.  Make sure each
+   statement is terminated by a semi-colon.
+
+ * The switch statement has changed--- it is cleaner.  In particular,
+   the `pop' in the default case should be removed.  For example, in
+   0.99-XX, the object was pushed onto the stack before each switch
+   case block was executed.  In 1.0, the switch statement nolonger
+   works this way.  So, if you currently have code that looks like:
+       
+          switch (x)
+	  { case 1:                  do_something () }
+	  { case 2 or case (x, 3):   do_something_else () }
+	  { () > 7:                  do_big_thing ();
+	  { pop ();                  do_default () }
+	  
+   
+   You must change it to:
+
+          switch (x)
+	  { case 1:                  do_something (); }
+	  { case 2 or case 3:        do_something_else (); }
+	  { x > 7:                   do_big_thing (); }
+	  {                          do_default (); }
+
+   Note that this example also illustrates that you may need to insert
+   some semi-colons to terminate statements.  In any event, it is a
+   good idea to study your switch statements very carefully.
+
+ * The `create_array' function has been eliminated in favor of a new,
+   cleaner mechanism.  For example, instead of using
+   
+         a = create_array ('s', 10, 20, 2);
+	 
+   to create a 10x20 array of strings, you must now use
+   
+         a = String_Type [10, 20];
+ 
+   Similarly, use `Integer_Type [10, 20]' to create a 10x20 array of
+   integers.  [Note for JED users: See jed/lib/compat.sl for an
+   implementation of create_array]
+   
+ * The semantics of the ``alias'' operator `&' has changed in a much
+   more useful way.  Briefly, if you have code that looks like:
+   
+         define exec_function (f)
+	 {
+	    variable x = 1.0;
+	    return f(x);
+	 }
+	 
+	 variable y = exec_function (&sin);
+
+   Then you must change it to:
+   
+         define exec_function (f)
+	 {
+	    variable x = 1.0;
+	    return @f(x);
+	 }
+	 
+	 variable y = exec_function (&sin);
+
+   where `@' is a ``dereference'' operator.
+   
+ * Several intrinsic functions have changed and a few have been
+   removed, or renamed.  See the documentation in slang/doc/ for more
+   detailed information about each function.
+
+   Functions ones that have been removed or renamed include:
+
+     create_array
+        Use simpler syntax, e.g.,  x = Integer_Type [10];
+
+     _obj_info
+        Use the new `typeof' function.  See documentation for more
+	information.
+	
+     print_stack has been renamed to _print_stack
+     
+     `slapropos' has been renamed to `_apropos'.  It also takes an
+     additional argument.
+	
+     `float' has been renamed to `double'.  See also `atof'.
+     
+     `slang_trace_function' renamed to `_trace_function'
+     
+     `pop_n' has been renamed to `_pop_n'
+     
+   The semantics of the following functions have changed:
+   
+      `fopen': 
+         It now returns NULL upon failure.  Change code such as
+      
+            fp = fopen (file, "r");
+	    if (fp == -1) error (...);
+
+         to:
+
+            fp = fopen (file, "r");
+	    if (fp == NULL) error (...);
+      
+      `getenv', `extract_element':
+         These return NULL upon failure instead of "".  This means code 
+	 that looks like:
+	   
+	    n = 0;
+	    while (elem = extract_element (list, n, ','), strlen(elem))
+	      {
+	         n++;
+		 .
+		 .
+	      }
+
+	 should be changed to:
+	 
+	    n = 0;
+	    while (elem = extract_element (list, n, ','), elem != NULL)
+	      {
+	         n++;
+		 .
+		 .
+	      }
+
+      `fclose': It now returns -1 upon failure and sets errno, or 0 if
+          successful. Previously, it returned 0 upon failure and 1
+	  upon success. 
+      
+      `fgets': It now returns just 1 value but takes a reference as an
+          argument.  That is, replace code such as:
+	  
+	    while (fgets (fp) > 0)
+	      {
+	         buf = ();
+		 .
+		 .
+	      }
+	     
+	  with:
+	  
+	    while (-1 != fgets (&buf, fp))
+	      {
+	         .
+		 .
+	      }
+	    
+
+Part 2:  C interface changes
+============================
+
+[Please review slang/doc/text/cslang.txt for information regarding
+ embedding the interpreter]
+
+There have been many, many changes since 0.99-XX.  Most of the changes
+concern the interpreter and the interpreter interface.  Other aspects
+of the library, e.g., SLsmg, etc have not changed too much.  I made
+every attempt to maintain as much backward compatibility as possible,
+weighing the pros and cons of every change.  I think that I arrived at
+a reasonable compromise, and, hopefully, you will agree.
+
+When recompiling your application, make sure that you compile it with
+warnings turned on so that prototype changes may be detected.
+
+-----------------------------------------------------------------------
+The way objects are accessed internally by the interpreter has changed
+dramatically.  This has important ramifications for an any application
+embedding the interpreter.  In particular, the way intrinsic objects
+are made available to the interpreter has changed.
+
+In 0.99-XX, the standard procedure was to use the MAKE_INTRINSIC macro
+inside an array of SLang_Name_Type, e.g.,
+
+    void c_fname (void) { ... }
+    char *String_Variable;
+    int Int_Variable;
+    char String_Buf[256];
+
+    static SLang_Name_Type My_Intrinsics [] = 
+    {
+       MAKE_INTRINSIC(".fname", c_fname, VOID_TYPE, 0),
+       MAKE_VARIABLE(".string_vname", String_Variable, STRING_TYPE, 1),
+       MAKE_VARIABLE(".string_buf_vname", String_Buf, STRING_TYPE, 1),
+       MAKE_VARIABLE(".int_vname", &Int_Variable, INT_TYPE, 0),
+       SLANG_END_TABLE
+    };
+
+In the new version, variables and intrinsics cannot be grouped in the
+same table.  Instead two tables must be used:
+
+    static SLang_Intrin_Fun_Type My_Intrinsic_Funs [] =
+    {
+       MAKE_INTRINSIC("fname", c_fname, VOID_TYPE, 0),
+       SLANG_END_TABLE
+    };
+    
+    char *String_Buf_Ptr = String_Buf;
+    static SLang_Intrin_Var_Type My_Intrinsic_Funs [] =
+    {
+       MAKE_VARIABLE("string_vname", &String_Variable, STRING_TYPE, 1),
+       MAKE_VARIABLE("int_vname", &Int_Variable, INT_TYPE, 0),
+       MAKE_VARIABLE(".string_buf_vname", &String_Buf_Ptr, STRING_TYPE, 1),
+       SLANG_END_TABLE
+    };
+    
+Note that the `.' is no longer required to be the first character in
+the name.  Also, the `&' address operator must be used for all
+variables in the MAKE_VARIABLE macro.  Finally, intrinsic STRING_TYPE
+variables must be pointers and not arrays.  This is the reason
+String_Buf_Ptr was introduced.
+
+You are encouraged to read the documentation about embedding the
+interpreter because it is now possible to ensure that variables passed
+to an intrinsic are type checked.  See slang/slstd.c for examples.
+
+------------------------------------------------------------------------
+0.99-XX had a very inconsistent interface.  For example, while some
+functions returned 0 upon success, others returned 0 to indicate
+failure.  One of the major changes to the library was to provide a
+consistent return value to indicate error.  In this version, -1
+indicates an error and 0 indicates success.  In particular, the
+following functions were affected:
+
+   SLdefine_for_ifdef
+   SLang_execute_function
+   SLexecute_function
+   SLang_run_hooks
+   SLang_load_object
+   SLang_pop_*
+   SLang_push_*
+   SLsmg_resume_smg
+   SLsmg_suspend_smg
+   SLtt_init_video
+   SLtt_reset_video
+
+Another change involved the name space.  All external symbols now
+start with `SL'.  To this end, the following functions have been
+renamed:
+
+    init_SLmath -->     SLang_init_slmath
+    init_SLunix -->     SLang_init_slunix
+    init_SLang -->      SLang_init_slang
+    init_SLfiles -->    SLang_init_slfile
+    slang_add_array --> SLang_add_intrinsic_array
+
+Some other functions were renamed when the interface changed:
+
+    SLang_extract_list_element --> SLextract_list_element
+    SLang_Error_Routine --> SLang_Error_Hook
+
+Some functions were not renamed but do have different prototypes:
+
+    int SLang_run_hooks(char *, unsigned int, ...);
+
+Some functions are nolonger available or have been replaced by newer,
+more flexible versions:
+
+    SLadd_name --> SLadd_intrinsic_variable, SLadd_intrinsic_function
+    SLang_pop/push_float --> SLang_pop/push_double
+
+
+Typedef Modifications
+---------------------
+SLang_Load_Type: The interface has been completely rewritten.  See
+  the documentation.
+  
+Preprocessor defines:
+--------------------
+  __SLMATH__ if math functions available (SLang_init_slmath)
+  __SLUNIX__ if unix functions available (SLang_init_slunix)
+  __SLFILE__ if file I/O functions available (SLang_init_slfile)
+
