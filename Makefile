@@ -1,14 +1,10 @@
-export CC ?= gcc
-export ERL ?= erl
-export RM ?= rm
+export CC := gcc
+export ERL := erl
+export RM := rm
 
-CFLAGS ?= -O2
-CPPFLAGS ?=
-LDFLAGS ?=
-
-override CFLAGS += -Wall
-
-export CFLAGS CPPFLAGS LDFLAGS
+export CFLAGS ?= -O2
+export CPPFLAGS ?=
+export LDFLAGS ?=
 
 all:
 	$(MAKE) -C c_src $@
