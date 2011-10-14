@@ -1,28 +1,14 @@
+ERL_CPPFLAGS := $(shell erl -noinput -eval \
+			'io:format("-I~s/erts-~s/include", [code:root_dir(), erlang:system_info(version)]), halt(0)')
 
+override CFLAGS += -fPIC
+override CPPFLAGS += $(ERL_CPPFLAGS)
+override LDFLAGS += -shared -lslang
 
+all : ../priv/slang_drv.so
 
-ifeq ($(TYPE),debug)
-EXTRA_FLAGS = -g
-else
-EXTRA_FLAGS =
-endif
-
-include  ../include.mk
-PIC=-fpic
-ERL = $(ERLDIR)/usr/include
-
-
-all:    ../priv/slang_drv.so
-
-
-slang_drv.o: slang_drv.c
-	$(CC) -o slang_drv.o -c $(PIC) $(EXTRA_FLAGS)  -I$(ERL) \
-	-I$(SLANG_INCLUDE) -I/usr/local/include slang_drv.c 
-
-../priv/slang_drv.so:	slang_drv.o
-	mkdir -p ../priv
-	$(CC) -shared -o ../priv/slang_drv.so slang_drv.o \
-	-L/usr/local/lib -lslang
+../priv/slang_drv.so : slang_drv.o
+	$(CC) $(LDFLAGS) -o $@ $^
 
 clean:
-	-rm -f *.o ../priv/*.so *~ 2> /dev/null
+	$(RM) -f *.o ../priv/slang_drv.so

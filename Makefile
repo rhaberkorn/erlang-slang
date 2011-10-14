@@ -1,22 +1,23 @@
+export CC ?= gcc
+export ERL ?= erl
+export RM ?= rm
 
-DIRS = src c_src demo
+CFLAGS ?= -O2
+CPPFLAGS ?=
+LDFLAGS ?=
 
-all clean:
-	@set -e ; \
-		for d in $(DIRS) ; do \
-		if [ -d $$d ]; then ( cd $$d && $(MAKE) $@ ) || exit 1 ; fi ; \
-		done
+override CFLAGS += -Wall
 
-debug:
-	@set -e ; \
-		for d in $(DIRS) ; do \
-		if [ -d $$d ]; then ( cd $$d && $(MAKE) TYPE=debug  ) || exit 1 ; fi ; \
-		done
+export CFLAGS CPPFLAGS LDFLAGS
 
+all:
+	$(MAKE) -C c_src $@
+	$(ERL) -noinput -eval \
+	       "case make:all() of up_to_date -> halt(0); error -> halt(1) end"
 
+install:
+	$(MAKE) -C c_src $@
 
-# possibly with --with-slang-include arg
-conf:
-	(cd config; ./configure)
-
-
+clean:
+	$(MAKE) -C c_src $@
+	$(RM) -f {ebin,demo}/*.beam

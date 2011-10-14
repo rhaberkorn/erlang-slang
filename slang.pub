@@ -1,7 +1,0 @@
-{name, "slang"}.
-{vsn, {1,0}}.
-{summary, "terminal library for Erlang"}.
-{author, "Claes Wikstrom", "klacke@bluetail.com", "981123"}.
-{keywords, ["quack"]}.
-{needs, []}.
-{abstract,"This is a library which makes it possible to write terminal based aplications al'a vi/emacs/mutt/slrn in erlang."}.
