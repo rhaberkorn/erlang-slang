@@ -13,7 +13,7 @@
 start() ->
     slang:tt_get_terminfo(),
     slang:kp_init(),
-    slang:init_tty(7, 0, 1),
+    slang:init_tty(7, 0, 0),
     slang:smg_init_smg (),
 
     draw_stuff2(),
